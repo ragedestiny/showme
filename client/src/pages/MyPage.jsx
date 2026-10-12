@@ -68,7 +68,7 @@ function MyPage() {
             <ListGroup.Item
               as="form"
               className="d-flex justify-content-between align-items-start form"
-              key={index}
+              key={sentence._id}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
               style={{

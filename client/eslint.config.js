@@ -30,6 +30,23 @@ export default [
       "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
       // Keeps instant refresh working: component files should only export components
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      // A list item's key should be the item's own id, not its position.
+      // React keeps each row (and anything inside it) by its key: keyed by
+      // position, when the list changes a row is reused to show another item,
+      // and a click aimed at it acts on the wrong one (this made the Admin
+      // page approve the wrong sentence). Built in, so it matches by name:
+      // key={index}, key={i}, key={idx}, also inside a `template ${string}`.
+      "no-restricted-syntax": [
+        "error",
+        ...[
+          "JSXAttribute[name.name='key'] > JSXExpressionContainer > Identifier[name=/^(i|idx|index)$/]",
+          "JSXAttribute[name.name='key'] > JSXExpressionContainer > TemplateLiteral > Identifier[name=/^(i|idx|index)$/]",
+        ].map((selector) => ({
+          selector,
+          message:
+            "Key list items by their own id (e.g. key={sentence._id}), not their position in the list.",
+        })),
+      ],
     },
   },
   // Build scripts and the Vite config run in Node (not the browser), where
