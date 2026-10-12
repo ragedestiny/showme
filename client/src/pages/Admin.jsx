@@ -38,34 +38,38 @@ function Admin() {
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
+  const isAdmin = user.isAdmin === true;
 
+  // Retrieve all sentences pending approval (the server checks again), once
+  // the user is an admin. Only when that changes, not on every update of the
+  // user or the login check: a second request answered after an approval
+  // would bring back the queue from before it.
   useEffect(() => {
-    if (user.isAdmin) {
-      // retrieve all sentences pending approval (the server checks again)
-      dispatch(fetchApprovalSentences());
-    } else if (sessionChecked) {
-      // The server says this isn't an admin: send back to home page. Not
-      // before it has answered, or a remembered student sends an admin away.
-      navigate("/");
-    }
-  }, [user, sessionChecked, dispatch, navigate]);
+    if (isAdmin) dispatch(fetchApprovalSentences());
+  }, [isAdmin, dispatch]);
 
-  function handleUpdateStatus(event, status) {
-    // Find the index of sentence that has been approved or rejected
-    const index = +event.target.closest(".approve-redo")?.getAttribute("value");
+  // The server says this isn't an admin: send back to home page. Not before
+  // it has answered, or a remembered student sends an admin away.
+  useEffect(() => {
+    if (sessionChecked && !isAdmin) navigate("/");
+  }, [sessionChecked, isAdmin, navigate]);
 
+  // `sentence` is the one in the row that was clicked, passed in directly:
+  // looking it up by row number could pick another one if the queue changed
+  // between drawing the row and the click.
+  function handleUpdateStatus(sentence, status) {
     // Load loading spinner
     setActive(true);
 
     // Send the approved/rejected sentence to backend and update database and Redux store
-    dispatch(
-      updatePendingApprovalSentences(status, sentencesAwaitingApproval[index])
-    ).then(() => setActive(false));
+    dispatch(updatePendingApprovalSentences(status, sentence)).then(() =>
+      setActive(false)
+    );
   }
 
   // Only render page if logged in user is admin; while the server is still
   // being asked, show the usual loader
-  if (!user.isAdmin) {
+  if (!isAdmin) {
     return sessionChecked ? null : <PageLoading />;
   }
 
@@ -94,12 +98,14 @@ function Admin() {
                       </tr>
                     </MDBTableHead>
                     <MDBTableBody>
-                      {[...sentencesAwaitingApproval].map((sentence, i) => {
+                      {[...sentencesAwaitingApproval].map((sentence) => {
                         return (
+                          // Keyed by the sentence, so a row always stays that
+                          // sentence's row when the queue changes, instead of
+                          // being reused to show another one
                           <tr
                             className="fw-normal approve-redo"
-                            value={i}
-                            key={i}
+                            key={sentence._id}
                           >
                             <th width="15%">
                               <span className="ms-2">
@@ -128,8 +134,8 @@ function Admin() {
                                   color="success"
                                   size="lg"
                                   className="me-3 fa-width-auto"
-                                  onClick={(e) =>
-                                    handleUpdateStatus(e, "approve")
+                                  onClick={() =>
+                                    handleUpdateStatus(sentence, "approve")
                                   }
                                 />
                               </MDBTooltip>
@@ -144,7 +150,9 @@ function Admin() {
                                   color="warning"
                                   size="lg"
                                   className="me-3 fa-width-auto"
-                                  onClick={(e) => handleUpdateStatus(e, "redo")}
+                                  onClick={() =>
+                                    handleUpdateStatus(sentence, "redo")
+                                  }
                                 />
                               </MDBTooltip>
                             </td>
