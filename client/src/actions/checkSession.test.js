@@ -83,4 +83,19 @@ describe("checking the login when the app opens", () => {
 
     expect(store.getState().user).toEqual(ada);
   });
+
+  // Pages that depend on who is logged in (Admin) wait for this, instead of
+  // judging by what the browser remembered
+  it.each([
+    ["a logged-in user", { status: 200, data: ada }],
+    ["nobody logged in (401)", 401],
+    ["no answer (offline)", "offline"],
+  ])("marks the login as checked once the server has answered: %s", async (_, answer) => {
+    const store = startApp({ remembered: {}, respond: () => answer });
+    expect(store.getState().session.checked).toBe(false);
+
+    await store.dispatch(checkSession());
+
+    expect(store.getState().session.checked).toBe(true);
+  });
 });

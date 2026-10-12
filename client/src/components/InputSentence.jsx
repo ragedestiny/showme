@@ -8,7 +8,9 @@ import { fetchUser } from "../actions/user";
 
 const COME_BACK_LATER = "Come Back Later For More Sentences!";
 
-function InputSentence() {
+// `ready`: the student's list has arrived from the server, so the day number
+// below is right and a save can't cross with the list request
+function InputSentence({ ready }) {
   const userSentences = useSelector((state) => state.usersentences);
   const tellSentences = useSelector((state) => state.tellsentences);
   const dispatch = useDispatch();
@@ -27,6 +29,8 @@ function InputSentence() {
   async function handleSubmit(event) {
     // prevents the page from refreshing
     event.preventDefault();
+
+    if (!ready) return;
 
     // if user didn't enter anything (or only spaces and line breaks),
     // disregard submit, so a blank sentence can't use up a day
@@ -81,7 +85,7 @@ function InputSentence() {
             variant="primary"
             type="submit"
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={saving || !ready}
           >
             Show ME!
           </Button>

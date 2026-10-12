@@ -123,6 +123,29 @@ describe("MyPage", () => {
     expect(screen.getByText("Tell 4")).toBeInTheDocument();
   });
 
+  // The day comes from the list, and a save sent while the list is still on its
+  // way can cross with it (a QA Wolf run recorded the list arriving with the
+  // new sentence already in it, which then showed twice). So saving waits.
+  it("lets the student save only once their list has arrived", async () => {
+    let release;
+    const list = new Promise((resolve) => (release = resolve));
+    renderWithApp(<MyPage />, {
+      state: { user: ada, tellsentences: tells(12), usersentences: [] },
+      route: "/MyPage",
+      respond: (config) => {
+        if (config.method === "get" && config.url === "/MyPage") return list; // held back
+        return { status: 200, data: ada };
+      },
+    });
+
+    expect(submitButton()).toBeDisabled();
+
+    release({ status: 200, data: shows(2) });
+
+    await waitFor(() => expect(submitButton()).toBeEnabled());
+    expect(screen.getByText("Day 3")).toBeInTheDocument();
+  });
+
   it("disables the button while saving, so a double click can't submit twice", async () => {
     const user = userEvent.setup();
     let release;

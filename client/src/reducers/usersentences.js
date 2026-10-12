@@ -4,6 +4,11 @@ const usersentences = (usersentences = [], action) => {
     case "FETCH_ALL":
       return [...action.payload];
     case "CREATE":
+      // Already listed if the list arrived from the server after the save:
+      // adding it again would show it twice (and skip a day number)
+      if (usersentences.some((sentence) => sentence._id === action.payload._id)) {
+        return usersentences;
+      }
       return [...usersentences, action.payload];
     case "EDIT":
       return usersentences.map((sentence) => {

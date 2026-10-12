@@ -18,8 +18,14 @@ export const fetchUser = () => async (dispatch) => {
 //     storage was cleared, or a test robot logged in through the test door)
 //   - no or expired cookie (401): the interceptor logs out
 //   - no answer (offline): leave things as they are
+// Whatever the answer, mark the check done: pages that depend on who is logged
+// in (Admin) wait for it instead of judging by what was remembered.
 export const checkSession = () => async (dispatch) => {
-  await dispatch(fetchUser());
+  try {
+    await dispatch(fetchUser());
+  } finally {
+    dispatch({ type: "SESSION_CHECKED" });
+  }
 };
 
 // Logout User. The backend cancels the login and deletes the httpOnly cookie

@@ -19,14 +19,9 @@ import {
   PURGE,
   REGISTER,
 } from "redux-persist";
-import storage from "redux-persist/es/storage";
+import persistConfig from "./persistConfig";
 
 // Setup redux-persist
-const persistConfig = {
-  key: "root",
-  version: 1,
-  storage,
-};
 const persistedReducer = persistReducer(persistConfig, reducers);
 
 // react redux global persisted state in store
