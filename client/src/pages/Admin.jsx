@@ -19,10 +19,15 @@ import {
   fetchApprovalSentences,
 } from "../actions/approvalsentences";
 import LoadingOverlay from "react-loading-overlay-ts";
+import PageLoading from "../components/PageLoading";
 
 function Admin() {
   // grab global state from redux store
   const user = useSelector((state) => state.user);
+  // Whether the server has said who is logged in since the page opened. Until
+  // then `user` is only who this browser remembers, perhaps a student who
+  // used it earlier while an admin has just logged in.
+  const sessionChecked = useSelector((state) => state.session.checked);
   const sentencesAwaitingApproval = useSelector(
     (state) => state.approvalsentences
   );
@@ -35,13 +40,15 @@ function Admin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // if user is not admin, send back to home page
-    if (!user.isAdmin) {
+    if (user.isAdmin) {
+      // retrieve all sentences pending approval (the server checks again)
+      dispatch(fetchApprovalSentences());
+    } else if (sessionChecked) {
+      // The server says this isn't an admin: send back to home page. Not
+      // before it has answered, or a remembered student sends an admin away.
       navigate("/");
     }
-    // retrieve all sentences pending approval
-    dispatch(fetchApprovalSentences());
-  }, [user, dispatch, navigate]);
+  }, [user, sessionChecked, dispatch, navigate]);
 
   function handleUpdateStatus(event, status) {
     // Find the index of sentence that has been approved or rejected
@@ -56,9 +63,10 @@ function Admin() {
     ).then(() => setActive(false));
   }
 
-  // Only render page if logged in user is admin
+  // Only render page if logged in user is admin; while the server is still
+  // being asked, show the usual loader
   if (!user.isAdmin) {
-    return null;
+    return sessionChecked ? null : <PageLoading />;
   }
 
   return (

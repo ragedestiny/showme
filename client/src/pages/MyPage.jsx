@@ -30,9 +30,19 @@ function MyPage() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const itemsPerPage = config.SentencesPerPageForMyPage;
 
-  // The signed-in student's sentences (nobody's signed in: nothing to fetch)
+  // The signed-in student's sentences (nobody's signed in: nothing to fetch).
+  // Saving waits until they've arrived: the day number comes from this list,
+  // and a save sent while it's still on its way can cross with it.
+  const [listLoaded, setListLoaded] = useState(false);
   useEffect(() => {
-    if (signedIn) dispatch(getUserSentences());
+    if (!signedIn) return;
+    let current = true;
+    dispatch(getUserSentences()).finally(() => {
+      if (current) setListLoaded(true);
+    });
+    return () => {
+      current = false;
+    };
   }, [dispatch, location, signedIn]);
 
   // Everything below is worked out from the store each time this draws, so
@@ -51,7 +61,7 @@ function MyPage() {
     // if there is a login user, display their own sentences
     return (
       <div className="contentmypage">
-        <InputSentence />
+        <InputSentence ready={listLoaded} />
 
         <ListGroup as="ol">
           {pageItems.map(({ sentence, index }) => (
