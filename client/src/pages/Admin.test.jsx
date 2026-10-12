@@ -125,4 +125,36 @@ describe("Admin", () => {
     });
     expect(JSON.parse(patch.data)).toEqual({ status: "redo", sentence: waiting[1] });
   });
+
+  // A second, later answer can land right after an approval and bring back a
+  // queue from before it (a QA Wolf run recorded two requests sent together)
+  it("asks for the queue once when the login check confirms an admin", async () => {
+    const { store, requests } = renderAdmin({ user: student, sessionChecked: false, login: { status: 200, data: admin } });
+
+    await store.dispatch(checkSession());
+    await screen.findByText("Mia Torres"); // the queue has arrived
+
+    expect(requests.filter((r) => r.method === "get" && r.url === "/Admin")).toHaveLength(1);
+  });
+
+  // What a QA Wolf run recorded: the queue grew (other students' sentences
+  // arrived) just as the admin clicked approve on a row, and the sentence that
+  // had moved into that row's place was approved instead.
+  it("approves the sentence in the row that was clicked, even if the queue changed just before", async () => {
+    const { store, requests } = renderAdmin();
+    await screen.findByText("Leo Chen");
+    const leosApprove = rows()[1].querySelector(".fa-check"); // the admin aims at Leo's row
+
+    const newer = { _id: "c", title: "day1", tell: "It is cold outside.", show: "Ice cracked underfoot.", author: { firstName: "Ana", lastName: "Ruiz" } };
+    store.dispatch({ type: "FETCH_APPROVAL", payload: [newer, ...waiting] }); // Ana's arrives on top
+    await waitFor(() => expect(rows()).toHaveLength(3)); // the table has redrawn
+    fireEvent.click(leosApprove);
+
+    const patch = await waitFor(() => {
+      const found = requests.find((r) => r.method === "patch");
+      expect(found).toBeDefined();
+      return found;
+    });
+    expect(JSON.parse(patch.data).sentence.show).toBe("The road shimmered.");
+  });
 });
