@@ -51,7 +51,7 @@ function CardGrid({ sentences, tellSentences }) {
         return (
           <Grid
             size={{ xs: 4, sm: 4, md: 4 }}
-            key={index}
+            key={sentence._id}
             sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
           >
             <Card

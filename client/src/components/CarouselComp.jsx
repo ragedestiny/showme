@@ -27,6 +27,9 @@ function CarouselComp(props) {
           const first = index === 0;
           const download = first || firstPhotoDone;
           return (
+            // A fixed list that never changes order, and position is what
+            // matters here (the first slide loads first)
+            // eslint-disable-next-line no-restricted-syntax
             <Carousel.Item key={index}>
               <picture className="d-block">
                 <source
