@@ -37,6 +37,20 @@ const BLANK_MESSAGE = "The show sentence can't be empty";
 const newestFirst = (sentences) =>
   sentences.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
+// Sentences matching `filter`, newest first, with each author's name filled
+// in. Used by the review queue (/Admin, admins only) and Collections (anyone,
+// no login needed). Both pages show only the author's name, so only the name
+// is sent: the rest of a profile holds the student's email, their Google
+// account id and their login details. A sentence's own GID is that same
+// Google account id, so it's left out too.
+const sentencesWithAuthorNames = async (filter) =>
+  newestFirst(
+    await Sentence.find(filter, "-GID").populate(
+      "author",
+      "firstName lastName -_id"
+    )
+  );
+
 export const createNewUserSentence = async (req, res) => {
   try {
     // Only the sentence text comes from the browser. Who wrote it comes from
@@ -148,12 +162,10 @@ export const getUserInfo = async (req, res) => {
 export const getPendingApprovalSentences = async (req, res) => {
   try {
     // fetch all sentences that are not approved, newest (last edited) first
-    const awaitingApproval = newestFirst(
-      await Sentence.find({
-        approved: false,
-        toRedo: false,
-      }).populate("author")
-    );
+    const awaitingApproval = await sentencesWithAuthorNames({
+      approved: false,
+      toRedo: false,
+    });
     res.status(200).json(awaitingApproval);
   } catch (error) {
     res.locals.error = error;
@@ -190,12 +202,10 @@ export const updatePendingApprovalSentences = async (req, res) => {
     await checkedSentence.save();
 
     // send back the updated queue, newest first
-    const awaitingApproval = newestFirst(
-      await Sentence.find({
-        approved: false,
-        toRedo: false,
-      }).populate("author")
-    );
+    const awaitingApproval = await sentencesWithAuthorNames({
+      approved: false,
+      toRedo: false,
+    });
 
     res.status(201).json(awaitingApproval);
   } catch (error) {
@@ -208,11 +218,9 @@ export const updatePendingApprovalSentences = async (req, res) => {
 export const fetchApprovedSentences = async (req, res) => {
   try {
     // find all approved sentences, newest first
-    const approvedSentences = newestFirst(
-      await Sentence.find({
-        approved: true,
-      }).populate("author")
-    );
+    const approvedSentences = await sentencesWithAuthorNames({
+      approved: true,
+    });
 
     res.status(200).json(approvedSentences);
   } catch (error) {
