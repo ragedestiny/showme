@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import Carousel from "react-bootstrap/Carousel";
 import Container from "react-bootstrap/esm/Container";
 import { phoneCarouselMedia } from "../config";
+import type { Slide } from "../tellData";
 
-function CarouselComp(props) {
+function CarouselComp(props: { sliderdata: Slide[] }) {
   // The first slide's photo is the main thing on the home page, so it
   // downloads on its own: the hidden slides' photos wait until it has arrived
   // (or failed) instead of sharing the connection with it. The slides only
@@ -39,7 +40,7 @@ function CarouselComp(props) {
                 <img
                   className="d-block w-100 carousel-image"
                   src={download ? entry.picture : undefined}
-                  alt={index + 1}
+                  alt={String(index + 1)}
                   fetchPriority={first ? "high" : "low"}
                   onLoad={first ? loadTheRest : undefined}
                   onError={first ? loadTheRest : undefined}

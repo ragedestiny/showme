@@ -7,13 +7,18 @@ import Fade from "@mui/material/Fade";
 // files, which the build drops but tests (and the dev server) load one by one
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
-export default function FadeMenu(props) {
+type SortOrder = "Random" | "Newest";
+
+export default function FadeMenu(props: {
+  randomize: () => void;
+  newest: () => void;
+}) {
   // keep track of display state - initialize with Random
-  const [display, setDisplay] = useState("Random");
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [display, setDisplay] = useState<SortOrder>("Random");
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
 
-  const handleClick = (event) => {
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -22,7 +27,7 @@ export default function FadeMenu(props) {
 
   // Each menu item says directly which option it is, rather than this
   // reading a label back from the page.
-  const choose = (option) => {
+  const choose = (option: SortOrder) => {
     setAnchorEl(null);
     // set dropdown menu display to selected
     setDisplay(option);

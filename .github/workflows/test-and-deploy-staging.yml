@@ -92,6 +92,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # TypeScript checks the code without running it (client/tsconfig.json)
+      - name: Type Check
+        run: npm run typecheck
+
       - name: Lint
         run: npm run lint
 

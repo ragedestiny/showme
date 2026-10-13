@@ -2,10 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import axios from "axios";
 import { setupInterceptors } from "./interceptors";
 import { fakeNetwork } from "../test/testUtils";
+import type { Outcome, Respond } from "../test/testUtils";
 
 // A fresh axios copy per test, wired to the pretend network, plus a fake
 // store that just records which actions were sent.
-const setup = (respond) => {
+const setup = (respond: Respond) => {
   const api = axios.create({ baseURL: "/api", adapter: fakeNetwork(respond) });
   const store = { dispatch: vi.fn() };
   setupInterceptors(store, api);
@@ -37,7 +38,7 @@ describe("the 401 rule", () => {
     expect(store.dispatch).not.toHaveBeenCalled();
   });
 
-  it.each([
+  it.each<[string, Outcome]>([
     ["a server error (500)", 500],
     ["forbidden (403)", 403],
     ["no answer at all (offline)", "offline"],

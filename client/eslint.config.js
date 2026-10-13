@@ -1,15 +1,16 @@
 // ESLint reads the code without running it and flags likely mistakes.
-// This follows Vite's official React starter setup.
+// This follows Vite's official React + TypeScript starter setup.
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
+import tseslint from "typescript-eslint";
 
 export default [
   // Generated output, not our code
   { ignores: ["build"] },
   {
-    files: ["**/*.{js,jsx}"],
+    files: ["**/*.{js,ts,tsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       globals: globals.browser,
@@ -47,6 +48,20 @@ export default [
             "Key list items by their own id (e.g. key={sentence._id}), not their position in the list.",
         })),
       ],
+    },
+  },
+  // TypeScript files: read with TypeScript's parser, with typescript-eslint's
+  // recommended rules. These switch off the JavaScript rules that TypeScript
+  // already does better (e.g. undefined names).
+  ...tseslint.configs.recommended.map((config) => ({
+    ...config,
+    files: ["**/*.{ts,tsx}"],
+  })),
+  {
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      // no-unused-vars above, in the version that understands types
+      "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
     },
   },
   // Build scripts and the Vite config run in Node (not the browser), where

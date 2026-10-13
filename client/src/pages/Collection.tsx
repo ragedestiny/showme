@@ -5,22 +5,24 @@ import Cards from "../components/Cards";
 import FadeMenu from "../components/FadeMenu";
 import LoadingOverlay from "react-loading-overlay-ts";
 import { fetchApprovedSentences } from "../actions/approvedsentences";
+import type { SentenceWithAuthor } from "../api/types";
+import type { AppDispatch } from "../reducers/types";
 
 // A copy of the list in a random order
-const shuffle = (sentences) =>
+const shuffle = (sentences: SentenceWithAuthor[]) =>
   [...sentences]
     .map((sentence) => ({ sentence, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(({ sentence }) => sentence);
 
 function Collection() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   // The server's list (newest first), the order chosen for display (random by
   // default), whether we're still waiting for the server, and whether the
   // last request failed. Bumping `attempt` asks the server again.
-  const [sentences, setSentences] = useState([]);
-  const [displaySentences, setDisplay] = useState([]);
+  const [sentences, setSentences] = useState<SentenceWithAuthor[]>([]);
+  const [displaySentences, setDisplay] = useState<SentenceWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);

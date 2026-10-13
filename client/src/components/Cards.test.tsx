@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, screen } from "@testing-library/react";
 import Cards from "./Cards";
 import { renderWithApp } from "../test/testUtils";
+import type { SentenceWithAuthor } from "../api/types";
 
 // Characterization tests for the Collections cards, written before reworking
 // how they track which pictures are still loading.
@@ -11,16 +12,19 @@ const tellsentences = [
   { key: 2, title: "Day 2", tell: "It is hot outside.", image: "/hot.jpg" },
 ];
 
-const approved = (n, prefix = "Show") =>
+const approved = (n: number, prefix = "Show"): SentenceWithAuthor[] =>
   Array.from({ length: n }, (_, i) => ({
     _id: `${prefix}-${i}`,
     title: `day${(i % 2) + 1}`,
     tell: tellsentences[i % 2].tell,
     show: `${prefix} ${i + 1}`,
+    approved: true,
+    toRedo: false,
+    createdAt: "2026-10-01T00:00:00.000Z",
     author: { firstName: "Ada", lastName: "Lovelace" },
   }));
 
-const renderCards = (sentences) =>
+const renderCards = (sentences: SentenceWithAuthor[]) =>
   renderWithApp(<Cards displaySentences={sentences} />, {
     state: { tellsentences, approvedsentences: sentences },
   });

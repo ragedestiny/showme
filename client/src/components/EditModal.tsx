@@ -4,13 +4,21 @@ import Modal from "react-bootstrap/Modal";
 import { useDispatch } from "react-redux";
 import { editSentences } from "../actions/usersentences";
 import { fetchUser } from "../actions/user";
+import type { Sentence } from "../api/types";
+import type { AppDispatch } from "../reducers/types";
 
 // The pencil: Font Awesome Free's "pen-to-square" icon (regular style, CC BY
 // 4.0, https://fontawesome.com/license/free), drawn directly instead of
 // through Font Awesome's code, which took about 140 KB for this one icon. The
 // classes give it Font Awesome's size, natural width and bounce (styles.css
 // and Font Awesome's stylesheet), exactly as before.
-const Pencil = ({ hidden, onClick }) => (
+const Pencil = ({
+  hidden,
+  onClick,
+}: {
+  hidden: boolean;
+  onClick: () => void;
+}) => (
   <svg
     data-prefix="far"
     data-icon="pen-to-square"
@@ -18,7 +26,10 @@ const Pencil = ({ hidden, onClick }) => (
     role="img"
     viewBox="0 0 512 512"
     aria-hidden="true"
-    hidden={hidden}
+    // React writes `hidden` on an <svg>, and Chrome (and the tests' pretend
+    // browser) hide it, but React's types only list it for HTML elements, as
+    // the HTML standard does. Untested in Firefox and Safari.
+    {...{ hidden }}
     onClick={onClick}
   >
     <path
@@ -30,8 +41,12 @@ const Pencil = ({ hidden, onClick }) => (
 
 // props.sentence: the sentence to edit; props.tell: its tell sentence;
 // props.showEdit: whether to show the pencil (the mouse is over the sentence)
-function EditModal(props) {
-  const dispatch = useDispatch();
+function EditModal(props: {
+  sentence: Sentence;
+  tell: string | undefined;
+  showEdit: boolean;
+}) {
+  const dispatch = useDispatch<AppDispatch>();
 
   // show or hide the edit modal window
   const [show, setShow] = useState(false);
@@ -84,7 +99,9 @@ function EditModal(props) {
             className="form-control"
             rows={4}
             value={newSentence}
-            onChange={(e) => setNewSentence(e.target.value)}
+            onChange={(e) =>
+              setNewSentence((e.target as HTMLTextAreaElement).value)
+            }
           ></Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>

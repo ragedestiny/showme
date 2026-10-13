@@ -9,18 +9,26 @@ import Typography from "@mui/material/Typography";
 import Skeleton from "@mui/material/Skeleton";
 import { useSelector } from "react-redux";
 import * as config from "../../src/config";
+import type { SentenceWithAuthor, TellSentence } from "../api/types";
+import type { RootState } from "../reducers/types";
 
 // The cards for one list of sentences, plus a record of which pictures are
 // still loading. Cards gives this a key made from the list, so a new list
 // (or a new order) gets a fresh CardGrid that starts with every picture
 // loading, instead of an effect resetting the record after drawing.
-function CardGrid({ sentences, tellSentences }) {
+function CardGrid({
+  sentences,
+  tellSentences,
+}: {
+  sentences: SentenceWithAuthor[];
+  tellSentences: TellSentence[];
+}) {
   const [loadingState, setLoadingState] = useState(() =>
     Array(config.DisplayCollectionSentences).fill(true)
   );
 
   // Function to handle image load
-  const handleImageLoad = (index) => {
+  const handleImageLoad = (index: number) => {
     setLoadingState((prevState) => {
       const newState = [...prevState];
       newState[index] = false;
@@ -47,7 +55,7 @@ function CardGrid({ sentences, tellSentences }) {
       columns={{ xs: 4, sm: 8, md: 12 }}
     >
       {sentences.map((sentence, index) => {
-        const day = +sentence.title.match(/\d+$/);
+        const day = Number(sentence.title.match(/\d+$/)?.[0]);
         return (
           <Grid
             size={{ xs: 4, sm: 4, md: 4 }}
@@ -117,10 +125,14 @@ function CardGrid({ sentences, tellSentences }) {
   );
 }
 
-function Cards(props) {
+function Cards(props: { displaySentences?: SentenceWithAuthor[] }) {
   // tell sentences from global redux state
-  const tellSentences = useSelector((state) => state.tellsentences);
-  const approvedSentences = useSelector((state) => state.approvedsentences);
+  const tellSentences = useSelector(
+    (state: RootState) => state.tellsentences
+  );
+  const approvedSentences = useSelector(
+    (state: RootState) => state.approvedsentences
+  );
 
   // Card component for displaying sample students' approved sentences once global state loaded
   if (approvedSentences.length !== 0) {

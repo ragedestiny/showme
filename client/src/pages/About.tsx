@@ -2,16 +2,17 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 import { useOpenLogin } from "../components/loginPopup";
+import type { RootState } from "../reducers/types";
 
 // About page
 const About = () => {
   const navigate = useNavigate();
   const openLogin = useOpenLogin();
-  const user = useSelector((state) => state.user);
+  const user = useSelector((state: RootState) => state.user);
 
   // Join Us: a signed-in student goes straight to their page; anyone else
   // gets the sign-in pop-up first (signing in then opens their page)
-  const join = (event) => {
+  const join = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault(); // stay in the app: no reload, no "#" in the address
     if (Object.keys(user).length !== 0) navigate("/MyPage");
     else openLogin();

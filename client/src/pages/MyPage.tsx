@@ -12,14 +12,15 @@ import { getUserSentences } from "../actions/usersentences";
 import { useLocation } from "react-router";
 import * as config from "../../src/config";
 import { useOpenLogin } from "../components/loginPopup";
+import type { AppDispatch, RootState } from "../reducers/types";
 
 function MyPage() {
   // get states from global react redux store
-  const tellSentences = useSelector((state) => state.tellsentences);
-  const user = useSelector((state) => state.user);
-  const userSentences = useSelector((state) => state.usersentences);
+  const tellSentences = useSelector((state: RootState) => state.tellsentences);
+  const user = useSelector((state: RootState) => state.user);
+  const userSentences = useSelector((state: RootState) => state.usersentences);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const openLogin = useOpenLogin();
   const signedIn = Object.keys(user).length !== 0;
@@ -27,7 +28,7 @@ function MyPage() {
   // Only things that belong to this screen are kept as state: which page is
   // open, and which sentence the mouse is over (to show its edit pencil).
   const [activePage, setActivePage] = useState(1);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const itemsPerPage = config.SentencesPerPageForMyPage;
 
   // The signed-in student's sentences (nobody's signed in: nothing to fetch).

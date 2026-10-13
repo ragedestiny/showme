@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vitest";
 import usersentences from "./usersentences";
+import type { Sentence } from "../api/types";
 
-const day1 = { _id: "s1", title: "day1", show: "Frost crackled beneath my boots." };
-const day2 = { _id: "s2", title: "day2", show: "Heat shimmered above the road." };
+const sentence = (fields: Pick<Sentence, "_id" | "title" | "tell" | "show">): Sentence => ({
+  ...fields,
+  approved: false,
+  toRedo: false,
+  createdAt: "2026-10-01T00:00:00.000Z",
+});
+const day1 = sentence({ _id: "s1", title: "day1", tell: "It is cold outside.", show: "Frost crackled beneath my boots." });
+const day2 = sentence({ _id: "s2", title: "day2", tell: "It is hot outside.", show: "Heat shimmered above the road." });
 
 describe("the student's list of sentences", () => {
   it("adds a newly saved sentence at the end", () => {

@@ -1,11 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Mock } from "vitest";
+import type { InternalAxiosRequestConfig } from "axios";
 import { act, screen, waitFor } from "@testing-library/react";
 import { Route, Routes, useLocation } from "react-router";
 import Login from "./Login";
 import { renderWithApp } from "../test/testUtils";
+import type { Respond } from "../test/testUtils";
 
 // A pretend Google sign-in script: records what the page asks it to do.
-let google;
+let google: {
+  accounts: {
+    id: {
+      initialize: Mock<(config: google.accounts.id.IdConfiguration) => void>;
+      renderButton: Mock;
+      prompt: Mock;
+    };
+  };
+};
 beforeEach(() => {
   google = {
     accounts: {
@@ -29,8 +40,11 @@ afterEach(() => {
 // Shows the current address, so tests can see where Login navigated to
 const Where = () => <div data-testid="where">{useLocation().pathname}</div>;
 
-const renderLogin = ({ onHide = vi.fn(), respond } = {}) => {
-  const requests = [];
+const renderLogin = ({
+  onHide = vi.fn(),
+  respond,
+}: { onHide?: Mock<() => void>; respond?: Respond } = {}) => {
+  const requests: InternalAxiosRequestConfig[] = [];
   const view = renderWithApp(
     <Routes>
       <Route path="*" element={<><Login show onHide={onHide} /><Where /></>} />
@@ -65,10 +79,10 @@ describe("Login", () => {
     await waitFor(() => expect(google.accounts.id.initialize).toHaveBeenCalled());
     const { callback } = google.accounts.id.initialize.mock.calls[0][0];
 
-    await act(() => callback({ credential: "google-id-token" }));
+    await act(() => callback!({ credential: "google-id-token", select_by: "btn" }));
 
     const auth = requests.find((r) => r.url === "/auth");
-    expect(JSON.parse(auth.data)).toEqual({ token: "google-id-token" });
+    expect(JSON.parse(auth!.data)).toEqual({ token: "google-id-token" });
     expect(requests.some((r) => r.url === "/Login")).toBe(true);
     expect(onHide).toHaveBeenCalled();
     expect(screen.getByTestId("where")).toHaveTextContent("/MyPage");
@@ -80,7 +94,7 @@ describe("Login", () => {
     await waitFor(() => expect(google.accounts.id.initialize).toHaveBeenCalled());
     const { callback } = google.accounts.id.initialize.mock.calls[0][0];
 
-    await act(() => callback({ credential: "bad" }));
+    await act(() => callback!({ credential: "bad", select_by: "btn" }));
 
     expect(onHide).not.toHaveBeenCalled();
     expect(screen.getByTestId("where")).toHaveTextContent("/");

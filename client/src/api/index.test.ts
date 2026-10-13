@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { API, fetchApprovedSentences } from "./index";
 import { fakeNetwork } from "../test/testUtils";
+import type { Respond } from "../test/testUtils";
 
 // On a fresh load of the collection page, index.html asks for the sentences
 // before the app's code has even downloaded (see vite.config.ts), and leaves
@@ -9,14 +10,15 @@ import { fakeNetwork } from "../test/testUtils";
 const sentences = [{ _id: "1", tell: "It is cold outside." }];
 
 // What fetch() hands back, reduced to the parts the app reads
-const answer = (status, data) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  json: async () => data,
-});
+const answer = (status: number, data: unknown) =>
+  ({
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => data,
+  }) as Partial<Response> as Response;
 
 // The pretend network for the app's own requests; records each one
-const network = (respond) => {
+const network = (respond: Respond) => {
   const adapter = vi.fn(fakeNetwork(respond));
   API.defaults.adapter = adapter;
   return adapter;

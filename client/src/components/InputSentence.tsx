@@ -5,15 +5,16 @@ import Container from "react-bootstrap/esm/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { createSentence } from "../actions/usersentences";
 import { fetchUser } from "../actions/user";
+import type { AppDispatch, RootState } from "../reducers/types";
 
 const COME_BACK_LATER = "Come Back Later For More Sentences!";
 
 // `ready`: the student's list has arrived from the server, so the day number
 // below is right and a save can't cross with the list request
-function InputSentence({ ready }) {
-  const userSentences = useSelector((state) => state.usersentences);
-  const tellSentences = useSelector((state) => state.tellsentences);
-  const dispatch = useDispatch();
+function InputSentence({ ready }: { ready: boolean }) {
+  const userSentences = useSelector((state: RootState) => state.usersentences);
+  const tellSentences = useSelector((state: RootState) => state.tellsentences);
+  const dispatch = useDispatch<AppDispatch>();
 
   // What the student is typing, and whether we're waiting for the server
   const [newSentence, setNewSentence] = useState("");
@@ -26,7 +27,7 @@ function InputSentence({ ready }) {
   const sentence = tellSentences[day - 1]?.tell || COME_BACK_LATER;
 
   // once a new sentence is entered, send it to the database
-  async function handleSubmit(event) {
+  async function handleSubmit(event: React.MouseEvent) {
     // prevents the page from refreshing
     event.preventDefault();
 

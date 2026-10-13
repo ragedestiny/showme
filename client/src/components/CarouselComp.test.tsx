@@ -9,9 +9,9 @@ import { phoneCarouselMedia } from "../config";
 // of each photo (a smaller download showing the same part of the photo).
 
 const slides = [
-  { picture: "/winter.jpg", phonePicture: "/winter-phone.jpg", tell: "It is cold.", show: "Frost bit my nose." },
-  { picture: "/summer.jpg", phonePicture: "/summer-phone.jpg", tell: "It is hot.", show: "The sand burned my feet." },
-  { picture: "/messy.jpg", phonePicture: "/messy-phone.jpg", tell: "It is messy.", show: "Socks covered the floor." },
+  { key: 1, title: "Day 1", picture: "/winter.jpg", phonePicture: "/winter-phone.jpg", tell: "It is cold.", show: "Frost bit my nose." },
+  { key: 2, title: "Day 2", picture: "/summer.jpg", phonePicture: "/summer-phone.jpg", tell: "It is hot.", show: "The sand burned my feet." },
+  { key: 3, title: "Day 3", picture: "/messy.jpg", phonePicture: "/messy-phone.jpg", tell: "It is messy.", show: "Socks covered the floor." },
 ];
 
 const photos = () => document.querySelectorAll("img.carousel-image");
@@ -35,11 +35,11 @@ describe("CarouselComp", () => {
 
     for (const photo of photos()) {
       const picture = photo.parentElement;
-      expect(picture.tagName).toBe("PICTURE");
+      expect(picture?.tagName).toBe("PICTURE");
       // The browser uses the first <source> whose media matches, else the <img>
-      const source = picture.firstElementChild;
-      expect(source.tagName).toBe("SOURCE");
-      expect(source.getAttribute("media")).toBe(phoneCarouselMedia);
+      const source = picture?.firstElementChild;
+      expect(source?.tagName).toBe("SOURCE");
+      expect(source?.getAttribute("media")).toBe(phoneCarouselMedia);
     }
   });
 
@@ -68,7 +68,7 @@ describe("CarouselComp", () => {
 
   it("downloads every photo straight away when the visitor changes slide", () => {
     render(<CarouselComp sliderdata={slides} />);
-    fireEvent.click(document.querySelector(".carousel-control-next"));
+    fireEvent.click(document.querySelector(".carousel-control-next")!);
 
     expect(sources()).toEqual(everyPhoto);
     expect(phoneCopies()).toEqual(everyPhoneCopy);

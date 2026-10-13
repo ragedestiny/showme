@@ -1,4 +1,6 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
+import type { Plugin, Rolldown } from "vite";
 import react from "@vitejs/plugin-react";
 // Version 8 exports the plugin as the package itself, not by name
 import purgeCSSPlugin from "@fullhuman/postcss-purgecss";
@@ -48,7 +50,7 @@ const removeUnusedStyles = () =>
 // Writes build/version.txt containing the git commit the site was built from.
 // Netlify provides it as COMMIT_REF. CI reads this file to know when a deploy
 // of a specific commit is live (see the workflows in .github/workflows/).
-const versionFile = () => ({
+const versionFile = (): Plugin => ({
   name: "version-file",
   generateBundle() {
     this.emitFile({
@@ -83,7 +85,7 @@ const pageRoutes = {
 // phones held upright, the full photo everywhere else. The <picture> in
 // CarouselComp makes the same choice, so the photo is never downloaded twice.
 const firstPhoto = tell[0];
-const preloadPhoto = (href, media) => ({
+const preloadPhoto = (href: string, media: string) => ({
   rel: "preload",
   as: "image",
   fetchpriority: "high",
@@ -95,12 +97,19 @@ const homePhoto = [
   preloadPhoto(firstPhoto.picture, `not all and ${phoneCarouselMedia}`),
 ];
 
+// What the tiny script starts for one address: <link> tags (as their
+// attributes) and API requests
+interface PageStart {
+  links: Record<string, string>[];
+  requests?: string[];
+}
+
 // The tiny script. `byAddress` lists, for each address, the <link> tags to add
 // (as their attributes) and the API requests to start; the app finds those
 // requests in window.earlyRequests. A tag with a `media` rule is only added on
 // screens that match it, so even a browser that ignored the rule wouldn't
 // download both photos.
-const pageScript = (byAddress) => `(function () {
+const pageScript = (byAddress: Record<string, PageStart>) => `(function () {
       var page = ${JSON.stringify(byAddress)}[location.pathname.toLowerCase().replace(/\\/+$/, "") || "/"];
       if (!page) return;
       (page.links || []).forEach(function (attributes) {
@@ -116,25 +125,28 @@ const pageScript = (byAddress) => `(function () {
       });
     })();`;
 
-const preloadCurrentPage = () => ({
+const preloadCurrentPage = (): Plugin => ({
   name: "preload-current-page",
   transformIndexHtml: {
     order: "post",
     handler(html, { bundle }) {
       if (!bundle) return html; // dev server: nothing is bundled
-      const chunks = Object.values(bundle).filter((c) => c.type === "chunk");
+      const chunks = Object.values(bundle).filter(
+        (c): c is Rolldown.OutputChunk => c.type === "chunk"
+      );
       // Files index.html already loads (the main file and its imports)
       const entry = chunks.find((c) => c.isEntry);
+      if (!entry) throw new Error("No main file found in the build");
       const alreadyLoaded = new Set([entry.fileName, ...entry.imports]);
       // A page's file plus the shared files it imports (e.g. MyPage needs Modal)
-      const filesFor = (page) => {
+      const filesFor = (page: string) => {
         const chunk = chunks.find((c) =>
           c.facadeModuleId?.replaceAll("\\", "/").endsWith(`/src/pages/${page}.tsx`)
         );
         if (!chunk) throw new Error(`No build file found for page ${page}`);
         return [chunk.fileName, ...chunk.imports].filter((f) => !alreadyLoaded.has(f));
       };
-      const atTheTop = {};
+      const atTheTop: Record<string, PageStart> = {};
       for (const [address, page] of Object.entries(pageRoutes)) {
         const links = filesFor(page).map((file) => ({
           rel: "modulepreload",

@@ -5,11 +5,19 @@ import { API } from "../api";
 import { setupInterceptors } from "../api/interceptors";
 import { checkSession } from "./user";
 import { fakeNetwork } from "../test/testUtils";
+import type { Outcome, Respond } from "../test/testUtils";
+import type { UserState } from "../reducers/user";
 
 // Real store, real reducers, real API instance, real interceptor; only the
 // network is pretend. `remembered` is what redux-persist restored on startup.
-let interceptorId;
-const startApp = ({ remembered, respond }) => {
+let interceptorId: number;
+const startApp = ({
+  remembered,
+  respond,
+}: {
+  remembered: UserState;
+  respond: Respond;
+}) => {
   const store = configureStore({
     reducer: reducers,
     preloadedState: { user: remembered },
@@ -86,7 +94,7 @@ describe("checking the login when the app opens", () => {
 
   // Pages that depend on who is logged in (Admin) wait for this, instead of
   // judging by what the browser remembered
-  it.each([
+  it.each<[string, Outcome]>([
     ["a logged-in user", { status: 200, data: ada }],
     ["nobody logged in (401)", 401],
     ["no answer (offline)", "offline"],

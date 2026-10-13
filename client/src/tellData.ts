@@ -2,7 +2,17 @@
 // picture: the photo; phonePicture: its middle, for phones held upright (see
 // phoneCarouselMedia in config.ts). Replacing a photo? Replace both.
 
-const tell = [
+// One slide of the home page carousel (see CarouselComp)
+export interface Slide {
+  key: number;
+  title: string;
+  tell: string;
+  show: string;
+  picture: string;
+  phonePicture: string;
+}
+
+const tell: Slide[] = [
   {
     key: 1,
     title: "Day 1",

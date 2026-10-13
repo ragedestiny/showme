@@ -20,9 +20,14 @@ import {
   REGISTER,
 } from "redux-persist";
 import persistConfig from "./persistConfig";
+import type { AppAction, RootState } from "./reducers/types";
 
-// Setup redux-persist
-const persistedReducer = persistReducer(persistConfig, reducers);
+// Setup redux-persist. (Its types were written before Redux 5 and can't work
+// out the state from `reducers` on their own, so it's spelled out.)
+const persistedReducer = persistReducer<RootState, AppAction>(
+  persistConfig,
+  reducers
+);
 
 // react redux global persisted state in store
 const store = configureStore({
@@ -58,8 +63,9 @@ window.addEventListener("vite:preloadError", (event) => {
   window.location.reload();
 });
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-let persistor = persistStore(store);
+// index.html always has the #root element
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+const persistor = persistStore(store);
 
 root.render(
   <Provider store={store}>

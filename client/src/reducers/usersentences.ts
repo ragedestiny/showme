@@ -1,5 +1,11 @@
+import type { Sentence } from "../api/types";
+import type { AppAction } from "./types";
+
 // user sentences reducer, keeps track of user sentences
-const usersentences = (usersentences = [], action) => {
+const usersentences = (
+  usersentences: Sentence[] = [],
+  action: AppAction
+): Sentence[] => {
   switch (action.type) {
     case "FETCH_ALL":
       return [...action.payload];

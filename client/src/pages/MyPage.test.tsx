@@ -3,7 +3,10 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MyPage from "./MyPage";
 import { OpenLoginContext } from "../components/loginPopup";
+import type { InternalAxiosRequestConfig } from "axios";
 import { renderWithApp } from "../test/testUtils";
+import type { Outcome, Respond } from "../test/testUtils";
+import type { Sentence, TellSentence } from "../api/types";
 
 // Characterization tests: they record what MyPage does today, from a
 // student's point of view, so the hooks rework can't change it unnoticed.
@@ -11,15 +14,16 @@ import { renderWithApp } from "../test/testUtils";
 const ada = { id: "g-ada", firstName: "Ada", lastName: "Lovelace" };
 
 // Tell sentences "Tell 1".."Tell N" for days 1..N
-const tells = (n) =>
+const tells = (n: number): TellSentence[] =>
   Array.from({ length: n }, (_, i) => ({
     key: i + 1,
     title: `Day ${i + 1}`,
     tell: `Tell ${i + 1}`,
+    image: `/day${i + 1}.jpg`,
   }));
 
 // The student's own sentences for days 1..n ("Show 1".."Show n")
-const shows = (n) =>
+const shows = (n: number): Sentence[] =>
   Array.from({ length: n }, (_, i) => ({
     _id: `s${i + 1}`,
     title: `day${i + 1}`,
@@ -28,13 +32,17 @@ const shows = (n) =>
     hideedit: true,
     approved: false,
     toRedo: false,
+    createdAt: "2026-10-01T00:00:00.000Z",
   }));
 
 // Draw MyPage for a signed-in Ada. The pretend server answers GET /MyPage
 // with `mine`, and records every request in `requests`.
-const renderMyPage = ({ tellCount = 12, mine = shows(2) } = {}) => {
-  const requests = [];
-  const respond = (config) => {
+const renderMyPage = ({
+  tellCount = 12,
+  mine = shows(2),
+}: { tellCount?: number; mine?: Sentence[] } = {}) => {
+  const requests: InternalAxiosRequestConfig[] = [];
+  const respond: Respond = (config) => {
     requests.push(config);
     if (config.method === "get" && config.url === "/MyPage") {
       return { status: 200, data: mine };
@@ -64,7 +72,7 @@ const listedShows = () =>
 describe("MyPage", () => {
   it("asks a visitor who isn't signed in to sign in, instead of showing an empty page", async () => {
     const openLogin = vi.fn();
-    const requests = [];
+    const requests: InternalAxiosRequestConfig[] = [];
     renderWithApp(
       <OpenLoginContext.Provider value={openLogin}>
         <MyPage />
@@ -110,7 +118,7 @@ describe("MyPage", () => {
     const post = await waitFor(() => {
       const found = requests.find((r) => r.method === "post" && r.url === "/MyPage");
       expect(found).toBeDefined();
-      return found;
+      return found!; // defined: checked just above
     });
     expect(JSON.parse(post.data)).toEqual({
       title: "day3",
@@ -127,8 +135,8 @@ describe("MyPage", () => {
   // way can cross with it (a QA Wolf run recorded the list arriving with the
   // new sentence already in it, which then showed twice). So saving waits.
   it("lets the student save only once their list has arrived", async () => {
-    let release;
-    const list = new Promise((resolve) => (release = resolve));
+    let release!: (outcome: Outcome) => void;
+    const list = new Promise<Outcome>((resolve) => (release = resolve));
     renderWithApp(<MyPage />, {
       state: { user: ada, tellsentences: tells(12), usersentences: [] },
       route: "/MyPage",
@@ -148,9 +156,9 @@ describe("MyPage", () => {
 
   it("disables the button while saving, so a double click can't submit twice", async () => {
     const user = userEvent.setup();
-    let release;
-    const answer = new Promise((resolve) => (release = resolve));
-    const requests = [];
+    let release!: (outcome: Outcome) => void;
+    const answer = new Promise<Outcome>((resolve) => (release = resolve));
+    const requests: InternalAxiosRequestConfig[] = [];
     renderWithApp(<MyPage />, {
       state: { user: ada, tellsentences: tells(12), usersentences: shows(2) },
       route: "/MyPage",
@@ -177,8 +185,8 @@ describe("MyPage", () => {
   it("editing: hovering shows the pencil; saving sends the change and shows it", async () => {
     const user = userEvent.setup();
     const { requests } = renderMyPage({ mine: shows(2) });
-    const item = (await screen.findByText("Show 2")).closest("form");
-    const pencil = () => item.querySelector('[data-icon="pen-to-square"]');
+    const item = (await screen.findByText("Show 2")).closest("form")!;
+    const pencil = () => item.querySelector('[data-icon="pen-to-square"]')!;
     expect(pencil()).not.toBeVisible();
 
     await user.hover(item);
@@ -196,7 +204,7 @@ describe("MyPage", () => {
     const patch = await waitFor(() => {
       const found = requests.find((r) => r.method === "patch" && r.url === "/MyPage");
       expect(found).toBeDefined();
-      return found;
+      return found!; // defined: checked just above
     });
     expect(JSON.parse(patch.data)).toMatchObject({
       title: "day2",

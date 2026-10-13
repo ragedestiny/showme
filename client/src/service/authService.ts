@@ -2,16 +2,18 @@ import { logoutUser } from "../actions/user";
 import { clearAllSentences } from "../actions/usersentences";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
+import type { AppDispatch } from "../reducers/types";
+import type { UserState } from "../reducers/user";
 
 const useAuthService = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
   const signInorOut = async (
-    user,
-    setLoading,
-    handleShowLoginModal,
-    handleNavCollapse
+    user: UserState,
+    setLoading: (loading: boolean) => void,
+    handleShowLoginModal: () => void,
+    handleNavCollapse: () => void
   ) => {
     try {
       // sign out user if there is one signed in

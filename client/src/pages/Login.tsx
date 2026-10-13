@@ -6,10 +6,11 @@ import { fetchUser } from "../actions/user";
 import { useNavigate } from "react-router";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { loginUser } from "../api";
+import type { AppDispatch } from "../reducers/types";
 
-function Login({ show, onHide }) {
+function Login({ show, onHide }: { show: boolean; onHide?: () => void }) {
   // dispatch for react redux
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   // navigate from react router
   const navigate = useNavigate();
@@ -21,7 +22,9 @@ function Login({ show, onHide }) {
   // lives inside this effect, so Google always gets a version that uses the
   // current onHide/navigate (not ones remembered from the first draw).
   useEffect(() => {
-    async function handleCallbackResponse(response) {
+    async function handleCallbackResponse(
+      response: google.accounts.id.CredentialResponse
+    ) {
       setLoading(true);
 
       try {
@@ -40,13 +43,15 @@ function Login({ show, onHide }) {
     }
 
     // setup for Google identity service, once the modal has drawn its box
-    /* global google */
     const timer = setTimeout(() => {
       google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: handleCallbackResponse,
       });
-      google.accounts.id.renderButton(document.getElementById("signInDiv"), {
+      // The box is there: the modal draws it straight away, and the spinner
+      // only replaces it after a sign-in, which needs the button first
+      google.accounts.id.renderButton(document.getElementById("signInDiv")!, {
+        type: "standard", // Google's default, which its types ask to spell out
         theme: "outline",
         size: "large",
       });

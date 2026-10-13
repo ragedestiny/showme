@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import LoadingOverlay from "react-loading-overlay-ts";
 import useAuthService from "../service/authService";
 import { OpenLoginContext } from "./loginPopup";
+import type { RootState } from "../reducers/types";
 
 // Home is the first page most visitors see, so it ships with the main file.
 // Every other page has its own file, so the home page doesn't wait for code
@@ -35,7 +36,7 @@ const prefetchPages = () => {
   );
 };
 // Returns a function that cancels the wait, for when the navbar goes away first
-const whenIdle = (callback) => {
+const whenIdle = (callback: () => void) => {
   if (window.requestIdleCallback) {
     const id = window.requestIdleCallback(callback, { timeout: 3000 });
     return () => window.cancelIdleCallback(id);
@@ -47,7 +48,7 @@ const whenIdle = (callback) => {
 // Going to /login directly (an old bookmark, or typing the address): open the
 // sign-in pop-up over the home page, just like the Login link does. Login is
 // a pop-up, so showing it on a page of its own left that page empty.
-function OpenLogin({ onOpen }) {
+function OpenLogin({ onOpen }: { onOpen: () => void }) {
   const navigate = useNavigate();
   useEffect(() => {
     onOpen();
@@ -58,7 +59,7 @@ function OpenLogin({ onOpen }) {
 
 function NavbarComp() {
   // get user from global react redux store
-  const user = useSelector((state) => state.user);
+  const user = useSelector((state: RootState) => state.user);
   const location = useLocation();
 
   const authService = useAuthService();
@@ -120,7 +121,7 @@ function NavbarComp() {
               </Navbar.Brand>
               <Navbar.Toggle
                 aria-controls="basic-navbar-nav"
-                onClick={() => setExpanded(expanded ? false : "expanded")}
+                onClick={() => setExpanded(!expanded)}
               />
               <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="ms-auto">

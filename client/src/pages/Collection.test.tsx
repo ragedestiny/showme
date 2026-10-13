@@ -2,19 +2,25 @@ import { afterEach, describe, expect, it } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Collection from "./Collection";
+import type { UserEvent } from "@testing-library/user-event";
 import { renderWithApp } from "../test/testUtils";
+import type { Outcome } from "../test/testUtils";
+import type { SentenceWithAuthor } from "../api/types";
 
 // Characterization tests for the Collections page: what a visitor sees.
 
 const tellsentences = [{ key: 1, title: "Day 1", tell: "It is cold outside.", image: "/cold.jpg" }];
 
 // Approved sentences, newest first (the order the server sends them in)
-const fromServer = (n) =>
+const fromServer = (n: number): SentenceWithAuthor[] =>
   Array.from({ length: n }, (_, i) => ({
     _id: `id-${i + 1}`,
     title: "day1",
     tell: "It is cold outside.",
     show: `Sentence ${i + 1}`,
+    approved: true,
+    toRedo: false,
+    createdAt: "2026-10-01T00:00:00.000Z",
     author: { firstName: "Ada", lastName: "Lovelace" },
   }));
 
@@ -22,7 +28,13 @@ const shownOrder = () => screen.queryAllByText(/^Sentence \d+$/).map((el) => el.
 
 // `server`: the list the server sends, or a function giving each answer in turn
 // (a status, "offline", or { status, data })
-const renderCollection = ({ server = fromServer(6), remembered = [] } = {}) => {
+const renderCollection = ({
+  server = fromServer(6),
+  remembered = [],
+}: {
+  server?: SentenceWithAuthor[] | ((call: number) => Outcome);
+  remembered?: SentenceWithAuthor[];
+} = {}) => {
   let calls = 0;
   return renderWithApp(<Collection />, {
     // `remembered`: an old list redux-persist may have restored
@@ -36,7 +48,7 @@ const renderCollection = ({ server = fromServer(6), remembered = [] } = {}) => {
   });
 };
 
-const pickSort = async (user, choice) => {
+const pickSort = async (user: UserEvent, choice: string) => {
   await user.click(screen.getByRole("button", { name: /random|newest/i }));
   await user.click(within(await screen.findByRole("menu")).getByText(choice));
 };
@@ -57,7 +69,9 @@ describe("Collection", () => {
     // On a fresh load, index.html starts this request before the app's code
     // arrives (see vite.config.ts). The app's own request would fail here.
     window.earlyRequests = {
-      "/Collections": Promise.resolve({ ok: true, status: 200, json: async () => fromServer(4) }),
+      "/Collections": Promise.resolve(
+        { ok: true, status: 200, json: async () => fromServer(4) } as Partial<Response> as Response
+      ),
     };
     renderCollection({ server: () => "offline" });
 

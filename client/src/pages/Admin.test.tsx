@@ -3,14 +3,21 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { Route, Routes, useLocation } from "react-router";
 import Admin from "./Admin";
 import { checkSession } from "../actions/user";
+import type { InternalAxiosRequestConfig } from "axios";
 import { renderWithApp } from "../test/testUtils";
+import type { Outcome } from "../test/testUtils";
+import type { SentenceWithAuthor } from "../api/types";
+import type { UserState } from "../reducers/user";
 
 // Characterization tests for the Admin review page, before upgrading the
 // MDB and Font Awesome libraries it uses.
 
-const waiting = [
-  { _id: "a", title: "day1", tell: "It is cold outside.", show: "Frost bit my fingers.", author: { firstName: "Mia", lastName: "Torres" } },
-  { _id: "b", title: "day2", tell: "It is hot outside.", show: "The road shimmered.", author: { firstName: "Leo", lastName: "Chen" } },
+// What every waiting sentence shares
+const pending = { approved: false, toRedo: false, createdAt: "2026-10-01T00:00:00.000Z" };
+
+const waiting: SentenceWithAuthor[] = [
+  { _id: "a", title: "day1", tell: "It is cold outside.", show: "Frost bit my fingers.", author: { firstName: "Mia", lastName: "Torres" }, ...pending },
+  { _id: "b", title: "day2", tell: "It is hot outside.", show: "The road shimmered.", author: { firstName: "Leo", lastName: "Chen" }, ...pending },
 ];
 
 const Where = () => <div data-testid="where">{useLocation().pathname}</div>;
@@ -23,8 +30,13 @@ const renderAdmin = ({
   sessionChecked = true,
   login = { status: 200, data: user },
   afterUpdate = [waiting[1]],
+}: {
+  user?: UserState;
+  sessionChecked?: boolean;
+  login?: Outcome | Promise<Outcome>;
+  afterUpdate?: SentenceWithAuthor[];
 } = {}) => {
-  const requests = [];
+  const requests: InternalAxiosRequestConfig[] = [];
   const view = renderWithApp(
     <Routes>
       <Route path="*" element={<><Admin /><Where /></>} />
@@ -62,8 +74,8 @@ describe("Admin", () => {
   // judged by that memory and sent the admin home before the server's "this is
   // the admin" arrived (641 ms later).
   it("waits for the server before judging, so a remembered student can't send an admin away", async () => {
-    let release;
-    const login = new Promise((resolve) => (release = resolve));
+    let release!: (outcome: Outcome) => void;
+    const login = new Promise<Outcome>((resolve) => (release = resolve));
     const { store } = renderAdmin({ user: student, sessionChecked: false, login });
 
     // The app asks the server who is logged in (App.tsx does this on startup)
@@ -100,12 +112,12 @@ describe("Admin", () => {
     const { requests } = renderAdmin({ afterUpdate: [waiting[1]] });
     await screen.findByText("Mia Torres");
 
-    fireEvent.click(rows()[0].querySelector(".fa-check"));
+    fireEvent.click(rows()[0].querySelector(".fa-check")!);
 
     const patch = await waitFor(() => {
       const found = requests.find((r) => r.method === "patch");
       expect(found).toBeDefined();
-      return found;
+      return found!; // defined: checked just above
     });
     expect(JSON.parse(patch.data)).toEqual({ status: "approve", sentence: waiting[0] });
     await waitFor(() => expect(screen.queryByText("Mia Torres")).not.toBeInTheDocument());
@@ -116,12 +128,12 @@ describe("Admin", () => {
     const { requests } = renderAdmin({ afterUpdate: [waiting[0]] });
     await screen.findByText("Leo Chen");
 
-    fireEvent.click(rows()[1].querySelector(".fa-rotate-right"));
+    fireEvent.click(rows()[1].querySelector(".fa-rotate-right")!);
 
     const patch = await waitFor(() => {
       const found = requests.find((r) => r.method === "patch");
       expect(found).toBeDefined();
-      return found;
+      return found!; // defined: checked just above
     });
     expect(JSON.parse(patch.data)).toEqual({ status: "redo", sentence: waiting[1] });
   });
@@ -143,9 +155,9 @@ describe("Admin", () => {
   it("approves the sentence in the row that was clicked, even if the queue changed just before", async () => {
     const { store, requests } = renderAdmin();
     await screen.findByText("Leo Chen");
-    const leosApprove = rows()[1].querySelector(".fa-check"); // the admin aims at Leo's row
+    const leosApprove = rows()[1].querySelector(".fa-check")!; // the admin aims at Leo's row
 
-    const newer = { _id: "c", title: "day1", tell: "It is cold outside.", show: "Ice cracked underfoot.", author: { firstName: "Ana", lastName: "Ruiz" } };
+    const newer = { _id: "c", title: "day1", tell: "It is cold outside.", show: "Ice cracked underfoot.", author: { firstName: "Ana", lastName: "Ruiz" }, ...pending };
     store.dispatch({ type: "FETCH_APPROVAL", payload: [newer, ...waiting] }); // Ana's arrives on top
     await waitFor(() => expect(rows()).toHaveLength(3)); // the table has redrawn
     fireEvent.click(leosApprove);
@@ -153,7 +165,7 @@ describe("Admin", () => {
     const patch = await waitFor(() => {
       const found = requests.find((r) => r.method === "patch");
       expect(found).toBeDefined();
-      return found;
+      return found!; // defined: checked just above
     });
     expect(JSON.parse(patch.data).sentence.show).toBe("The road shimmered.");
   });

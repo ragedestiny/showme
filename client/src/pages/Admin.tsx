@@ -20,22 +20,26 @@ import {
 } from "../actions/approvalsentences";
 import LoadingOverlay from "react-loading-overlay-ts";
 import PageLoading from "../components/PageLoading";
+import type { ReviewDecision, SentenceWithAuthor } from "../api/types";
+import type { AppDispatch, RootState } from "../reducers/types";
 
 function Admin() {
   // grab global state from redux store
-  const user = useSelector((state) => state.user);
+  const user = useSelector((state: RootState) => state.user);
   // Whether the server has said who is logged in since the page opened. Until
   // then `user` is only who this browser remembers, perhaps a student who
   // used it earlier while an admin has just logged in.
-  const sessionChecked = useSelector((state) => state.session.checked);
+  const sessionChecked = useSelector(
+    (state: RootState) => state.session.checked
+  );
   const sentencesAwaitingApproval = useSelector(
-    (state) => state.approvalsentences
+    (state: RootState) => state.approvalsentences
   );
   // create state for loading spinner
   const [isActive, setActive] = useState(false);
 
   // dispatch for redux
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   const navigate = useNavigate();
   const isAdmin = user.isAdmin === true;
@@ -57,7 +61,10 @@ function Admin() {
   // `sentence` is the one in the row that was clicked, passed in directly:
   // looking it up by row number could pick another one if the queue changed
   // between drawing the row and the click.
-  function handleUpdateStatus(sentence, status) {
+  function handleUpdateStatus(
+    sentence: SentenceWithAuthor,
+    status: ReviewDecision
+  ) {
     // Load loading spinner
     setActive(true);
 
@@ -107,7 +114,9 @@ function Admin() {
                             className="fw-normal approve-redo"
                             key={sentence._id}
                           >
-                            <th width="15%">
+                            {/* An old HTML attribute browsers still follow;
+                                React's types leave it off <th> (not <td>) */}
+                            <th {...{ width: "15%" }}>
                               <span className="ms-2">
                                 {/* Some accounts have no last name */}
                                 {sentence.author.lastName

@@ -6,7 +6,11 @@ import { configureStore } from "@reduxjs/toolkit";
 import reducers from "./reducers";
 import { API } from "./api";
 import { setupInterceptors } from "./api/interceptors";
+import type { InternalAxiosRequestConfig } from "axios";
 import { fakeNetwork } from "./test/testUtils";
+import type { Outcome, Respond } from "./test/testUtils";
+import type { Sentence, SentenceWithAuthor, TellSentence } from "./api/types";
+import type { RootState } from "./reducers/types";
 import App from "./components/App";
 
 // Whole-app journeys: the real App (menu, pages, and the login check it starts
@@ -18,17 +22,25 @@ import App from "./components/App";
 
 // Draw the app as a visitor opening `url` sees it, starting from what this
 // browser remembered (`state`). `respond(config)` answers each request.
-const openApp = ({ url, state = {}, respond }) => {
-  const requests = [];
+const openApp = ({
+  url,
+  state = {},
+  respond,
+}: {
+  url: string;
+  state?: Partial<RootState>;
+  respond: Respond;
+}) => {
+  const requests: InternalAxiosRequestConfig[] = [];
   const store = configureStore({ reducer: reducers, preloadedState: state });
   API.defaults.adapter = fakeNetwork(async (config) => {
     requests.push(config);
     const outcome = await respond(config);
     // Every answer arrives as a fresh copy, as it does over a real network
     // (JSON), never as the very object the test or the store already holds
-    return outcome?.data === undefined
-      ? outcome
-      : { ...outcome, data: JSON.parse(JSON.stringify(outcome.data)) };
+    return typeof outcome === "object" && outcome.data !== undefined
+      ? { ...outcome, data: JSON.parse(JSON.stringify(outcome.data)) }
+      : outcome;
   });
   const interceptorId = setupInterceptors(store);
   onTestFinished(() => API.interceptors.response.eject(interceptorId));
@@ -38,14 +50,14 @@ const openApp = ({ url, state = {}, respond }) => {
       <App />
     </Provider>
   );
-  const sent = (method, url) => requests.filter((r) => r.method === method && r.url === url);
+  const sent = (method: string, url: string) => requests.filter((r) => r.method === method && r.url === url);
   return { store, requests, sent };
 };
 
 // A server answer the test releases when it chooses
 const heldAnswer = () => {
-  let release;
-  const answer = new Promise((resolve) => (release = resolve));
+  let release!: (outcome: Outcome) => void;
+  const answer = new Promise<Outcome>((resolve) => (release = resolve));
   return { answer, release };
 };
 
@@ -55,14 +67,22 @@ const settle = () => act(async () => {});
 
 const where = () => window.location.pathname;
 
-const tells = Array.from({ length: 12 }, (_, i) => ({ key: i + 1, title: `Day ${i + 1}`, tell: `Tell ${i + 1}` }));
+const tells: TellSentence[] = Array.from({ length: 12 }, (_, i) => ({
+  key: i + 1,
+  title: `Day ${i + 1}`,
+  tell: `Tell ${i + 1}`,
+  image: `/day${i + 1}.jpg`,
+}));
 const student = { id: "test-student", firstName: "Test", lastName: "Student", isAdmin: false };
 const admin = { id: "test-admin", firstName: "Test", lastName: "Admin", isAdmin: true };
-const pending = (id, show, firstName) => ({
+const pending = (id: string, show: string, firstName: string): SentenceWithAuthor => ({
   _id: id,
   title: "day1",
   tell: "Tell 1",
   show,
+  approved: false,
+  toRedo: false,
+  createdAt: "2026-10-01T00:00:00.000Z",
   author: { firstName, lastName: "Student" },
 });
 const mia = pending("a", "Frost bit my fingers.", "Mia");
@@ -138,10 +158,10 @@ describe("an admin opening the review page", () => {
       },
     });
     await screen.findByText("Leo Student");
-    const rowOf = (name) => screen.getByText(name).closest("tr");
-    const leosApprove = rowOf("Leo Student").querySelector(".fa-check"); // aimed at Leo's row
+    const rowOf = (name: string) => screen.getByText(name).closest("tr")!;
+    const leosApprove = rowOf("Leo Student").querySelector(".fa-check")!; // aimed at Leo's row
 
-    fireEvent.click(rowOf("Mia Student").querySelector(".fa-check"));
+    fireEvent.click(rowOf("Mia Student").querySelector(".fa-check")!);
     await screen.findByText("Sam Student"); // the queue has changed
     fireEvent.click(leosApprove);
 
@@ -186,8 +206,9 @@ describe("a student writing on MyPage", () => {
   it("can save only once the list has arrived, then saves the right day and shows it once", async () => {
     const user = userEvent.setup();
     const list = heldAnswer();
-    const day1 = { _id: "s1", title: "day1", tell: "Tell 1", show: "Show 1" };
-    const day2 = { _id: "s2", title: "day2", tell: "Tell 2", show: "Show 2" };
+    const saved = { approved: false, toRedo: false, createdAt: "2026-10-01T00:00:00.000Z" };
+    const day1: Sentence = { _id: "s1", title: "day1", tell: "Tell 1", show: "Show 1", ...saved };
+    const day2: Sentence = { _id: "s2", title: "day2", tell: "Tell 2", show: "Show 2", ...saved };
     const { sent } = openApp({
       url: "/MyPage",
       state: { user: student, tellsentences: tells, usersentences: [day1] },

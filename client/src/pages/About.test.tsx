@@ -5,6 +5,7 @@ import { useLocation } from "react-router";
 import About from "./About";
 import { OpenLoginContext } from "../components/loginPopup";
 import { renderWithApp } from "../test/testUtils";
+import type { UserState } from "../reducers/user";
 
 // "Join Us!" on the About page: a signed-in student goes to their page; a
 // visitor who isn't signed in gets the sign-in pop-up (signing in then opens
@@ -15,7 +16,7 @@ const Where = () => <div data-testid="where">{useLocation().pathname}</div>;
 
 // Draw the About page for `user` ({} = not signed in), with a pretend
 // "open the sign-in pop-up" that records each call
-const renderAbout = (user) => {
+const renderAbout = (user: UserState) => {
   const openLogin = vi.fn();
   renderWithApp(
     <OpenLoginContext.Provider value={openLogin}>

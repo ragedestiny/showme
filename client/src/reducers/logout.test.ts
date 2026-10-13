@@ -1,13 +1,25 @@
 import { describe, expect, it } from "vitest";
 import reducers from "./index";
+import type { RootState } from "./types";
+
+// What every sentence below shares
+const day1 = {
+  _id: "s1",
+  title: "day1",
+  tell: "It is cold outside.",
+  approved: false,
+  toRedo: false,
+  createdAt: "2026-10-01T00:00:00.000Z",
+};
+const author = { firstName: "Ada", lastName: "Lovelace" };
 
 // The whole app state while someone is logged in.
-const loggedInState = {
+const loggedInState: Partial<RootState> = {
   user: { firstName: "Ada", isAdmin: true },
-  usersentences: [{ title: "day1", show: "Ada's sentence" }],
-  approvalsentences: [{ title: "day1", show: "Waiting for review" }],
-  tellsentences: [{ title: "Day 1", tell: "It is cold outside." }],
-  approvedsentences: [{ title: "day1", show: "Public sentence" }],
+  usersentences: [{ ...day1, show: "Ada's sentence" }],
+  approvalsentences: [{ ...day1, show: "Waiting for review", author }],
+  tellsentences: [{ key: 1, title: "Day 1", tell: "It is cold outside.", image: "/cold.jpg" }],
+  approvedsentences: [{ ...day1, show: "Public sentence", author }],
 };
 
 describe("one LOGOUT action", () => {

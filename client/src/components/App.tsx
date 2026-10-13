@@ -6,9 +6,10 @@ import { useDispatch } from "react-redux";
 import { getTellSentences } from "../actions/tellsentences";
 import { BrowserRouter } from "react-router";
 import { checkSession } from "../actions/user";
+import type { AppDispatch } from "../reducers/types";
 
 function App() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   // The first screen is drawn: take away the "Loading..." overlay that
   // index.html shows while the app's code downloads

@@ -1,0 +1,38 @@
+// The site and its tests (src/), which run in the browser (see tsconfig.json)
+{
+  "compilerOptions": {
+    // Remembers the last check, so the next one only re-reads what changed
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    // Check only: Vite turns the code into what browsers run
+    "noEmit": true,
+
+    // Read imports the way Vite does (e.g. "./api" finds ./api/index.ts)
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    // Built-in types beyond the ones each import brings: Vite's (import.meta.env,
+    // importing .css files) and Google's sign-in script (the global `google`)
+    "types": ["vite/client", "google.accounts"],
+    // Libraries' own type files are checked by the libraries
+    "skipLibCheck": true,
+
+    // Every check, including "this might be missing" (null/undefined) and
+    // "what type is this?" (no silent `any`)
+    "strict": true,
+    // A switch case must end with return/break, not run into the next one
+    "noFallthroughCasesInSwitch": true,
+    // A side-effect import (e.g. a stylesheet) must point at a real file
+    "noUncheckedSideEffectImports": true,
+
+    // Keep TypeScript "JavaScript plus types": every type can simply be deleted
+    // to get the JavaScript that runs, which is what Vite does. Type-only
+    // imports say so (`import type`), and TypeScript-only features that
+    // generate code (enums, namespaces) aren't used.
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true
+  },
+  "include": ["src"]
+}
