@@ -161,7 +161,7 @@ function NavbarComp() {
         <div>
           <PageErrorBoundary resetKey={location.pathname}>
             <Suspense fallback={<PageLoading />}>
-              {/* Lets pages open the sign-in pop-up (see loginPopup.js) */}
+              {/* Lets pages open the sign-in pop-up (see loginPopup.ts) */}
               <OpenLoginContext.Provider value={handleShowLoginModal}>
                 <Routes>
                   <Route path="/admin" element={<Admin />} />

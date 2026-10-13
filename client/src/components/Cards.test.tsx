@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, screen } from "@testing-library/react";
 import Cards from "./Cards";
-import { renderWithApp } from "../test/testUtils.jsx";
+import { renderWithApp } from "../test/testUtils";
 
 // Characterization tests for the Collections cards, written before reworking
 // how they track which pictures are still loading.

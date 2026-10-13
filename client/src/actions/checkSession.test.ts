@@ -4,7 +4,7 @@ import reducers from "../reducers";
 import { API } from "../api";
 import { setupInterceptors } from "../api/interceptors";
 import { checkSession } from "./user";
-import { fakeNetwork } from "../test/testUtils.jsx";
+import { fakeNetwork } from "../test/testUtils";
 
 // Real store, real reducers, real API instance, real interceptor; only the
 // network is pretend. `remembered` is what redux-persist restored on startup.

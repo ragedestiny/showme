@@ -1,6 +1,6 @@
 // home page display - static doesn't change
 // picture: the photo; phonePicture: its middle, for phones held upright (see
-// phoneCarouselMedia in config.js). Replacing a photo? Replace both.
+// phoneCarouselMedia in config.ts). Replacing a photo? Replace both.
 
 const tell = [
   {

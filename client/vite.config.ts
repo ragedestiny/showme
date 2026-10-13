@@ -2,8 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 // Version 8 exports the plugin as the package itself, not by name
 import purgeCSSPlugin from "@fullhuman/postcss-purgecss";
-import tell from "./src/tellData.js";
-import { phoneCarouselMedia } from "./src/config.js";
+import tell from "./src/tellData";
+import { phoneCarouselMedia } from "./src/config";
 
 // The style libraries (MDB, Bootstrap and Font Awesome: about 570 KB) style
 // far more than this site uses, and browsers download all of it before they
@@ -40,7 +40,7 @@ const tagsAndAttributes =
   "data-popper-placement top bottom start end left right auto";
 const removeUnusedStyles = () =>
   purgeCSSPlugin({
-    content: ["./index.html", "./src/**/*.{js,jsx}", { raw: tagsAndAttributes, extension: "html" }],
+    content: ["./index.html", "./src/**/*.{ts,tsx}", { raw: tagsAndAttributes, extension: "html" }],
     skippedContentGlobs: ["**/*.test.*", "**/test/**"],
     safelist: { standard: addedByLibraries },
   });
@@ -64,7 +64,7 @@ const versionFile = () => ({
 // two tiny scripts in index.html ask for them straight away:
 // 1. At the very top: the page's own code (each page is a separate file,
 //    loaded on demand, see NavbarComp), and the collection page's sentences
-//    (the app picks that request up in src/api/index.js).
+//    (the app picks that request up in src/api/index.ts).
 // 2. After the stylesheets: the home page's first photo. The browser can't
 //    draw anything until the stylesheets have arrived; starting the big photo
 //    before them would make them share the connection with it, and the first
@@ -129,7 +129,7 @@ const preloadCurrentPage = () => ({
       // A page's file plus the shared files it imports (e.g. MyPage needs Modal)
       const filesFor = (page) => {
         const chunk = chunks.find((c) =>
-          c.facadeModuleId?.replaceAll("\\", "/").endsWith(`/src/pages/${page}.jsx`)
+          c.facadeModuleId?.replaceAll("\\", "/").endsWith(`/src/pages/${page}.tsx`)
         );
         if (!chunk) throw new Error(`No build file found for page ${page}`);
         return [chunk.fileName, ...chunk.imports].filter((f) => !alreadyLoaded.has(f));
@@ -200,6 +200,6 @@ export default defineConfig(({ command }) => ({
   test: {
     // A pretend browser, so component tests have somewhere to draw
     environment: "jsdom",
-    setupFiles: ["./src/test/setup.js"],
+    setupFiles: ["./src/test/setup.ts"],
   },
 }));

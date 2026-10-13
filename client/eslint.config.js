@@ -52,7 +52,7 @@ export default [
   // Build scripts and the Vite config run in Node (not the browser), where
   // `process` exists
   {
-    files: ["scripts/**/*.js", "vite.config.js"],
+    files: ["scripts/**/*.js", "vite.config.ts"],
     languageOptions: { globals: globals.node },
   },
 ];

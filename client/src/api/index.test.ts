@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { API, fetchApprovedSentences } from "./index";
-import { fakeNetwork } from "../test/testUtils.jsx";
+import { fakeNetwork } from "../test/testUtils";
 
 // On a fresh load of the collection page, index.html asks for the sentences
-// before the app's code has even downloaded (see vite.config.js), and leaves
+// before the app's code has even downloaded (see vite.config.ts), and leaves
 // the request in window.earlyRequests for the app to pick up.
 
 const sentences = [{ _id: "1", tell: "It is cold outside." }];

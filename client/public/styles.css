@@ -284,7 +284,7 @@ body {
   border-radius: 0.5rem;
 }
 
-/* "Loading..." while a page's code downloads (PageLoading.jsx): placed and
+/* "Loading..." while a page's code downloads (PageLoading.tsx): placed and
    sized like the collection page's own "Loading..." (whose sort menu's 1% top
    margin pushes it down), so the handover between the two doesn't move it,
    and the footer stays at the bottom */
@@ -294,7 +294,7 @@ body {
 }
 
 /* "Loading..." while the app's code downloads (#app-loading in index.html,
-   removed by App.jsx): a copy of react-loading-overlay-ts's overlay, covering
+   removed by App.tsx): a copy of react-loading-overlay-ts's overlay, covering
    the whole window. It fades in after 0.3 s, so a quick load never shows it */
 #app-loading {
   position: fixed;
@@ -382,7 +382,7 @@ body {
   margin-right: 2vw;
 }
 
-/* The cards' gradient background is set in Cards.jsx (sx), because MUI 9's
+/* The cards' gradient background is set in Cards.tsx (sx), because MUI 9's
    own card styles load after this file and would override it here. */
 
 .MuiCard-root:hover {
@@ -414,7 +414,7 @@ body {
   font-family: "Font Awesome 7 Free", "Font Awesome 6 Free";
 }
 
-/* The edit pencil on MyPage (EditModal.jsx) is Font Awesome's "pen-to-square"
+/* The edit pencil on MyPage (EditModal.tsx) is Font Awesome's "pen-to-square"
    icon drawn directly. These are the sizing rules Font Awesome's code used to
    add for it; fa-lg, fa-width-auto and fa-bounce come from Font Awesome's
    stylesheet. */

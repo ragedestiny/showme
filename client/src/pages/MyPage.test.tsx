@@ -3,7 +3,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MyPage from "./MyPage";
 import { OpenLoginContext } from "../components/loginPopup";
-import { renderWithApp } from "../test/testUtils.jsx";
+import { renderWithApp } from "../test/testUtils";
 
 // Characterization tests: they record what MyPage does today, from a
 // student's point of view, so the hooks rework can't change it unnoticed.

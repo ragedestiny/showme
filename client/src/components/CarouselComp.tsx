@@ -10,7 +10,7 @@ function CarouselComp(props) {
   // start turning then, so the next photo still has the usual 5 seconds to
   // arrive. A visitor who changes slide gets every photo straight away.
   // Phones held upright download the phone-shaped copy instead (<source>),
-  // which index.html has usually started downloading already (vite.config.js).
+  // which index.html has usually started downloading already (vite.config.ts).
   const [firstPhotoDone, setFirstPhotoDone] = useState(false);
   const loadTheRest = () => setFirstPhotoDone(true);
 

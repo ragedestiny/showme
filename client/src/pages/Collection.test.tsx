@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Collection from "./Collection";
-import { renderWithApp } from "../test/testUtils.jsx";
+import { renderWithApp } from "../test/testUtils";
 
 // Characterization tests for the Collections page: what a visitor sees.
 
@@ -55,7 +55,7 @@ describe("Collection", () => {
 
   it("shows the sentences index.html already asked for, without asking again", async () => {
     // On a fresh load, index.html starts this request before the app's code
-    // arrives (see vite.config.js). The app's own request would fail here.
+    // arrives (see vite.config.ts). The app's own request would fail here.
     window.earlyRequests = {
       "/Collections": Promise.resolve({ ok: true, status: 200, json: async () => fromServer(4) }),
     };

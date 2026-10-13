@@ -3,7 +3,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { Route, Routes, useLocation } from "react-router";
 import Admin from "./Admin";
 import { checkSession } from "../actions/user";
-import { renderWithApp } from "../test/testUtils.jsx";
+import { renderWithApp } from "../test/testUtils";
 
 // Characterization tests for the Admin review page, before upgrading the
 // MDB and Font Awesome libraries it uses.
@@ -66,7 +66,7 @@ describe("Admin", () => {
     const login = new Promise((resolve) => (release = resolve));
     const { store } = renderAdmin({ user: student, sessionChecked: false, login });
 
-    // The app asks the server who is logged in (App.jsx does this on startup)
+    // The app asks the server who is logged in (App.tsx does this on startup)
     const checking = store.dispatch(checkSession());
     expect(screen.getByTestId("where")).toHaveTextContent("/admin");
     expect(screen.getByText("Loading...")).toBeInTheDocument();

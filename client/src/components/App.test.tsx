@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import reducers from "../reducers";
 import { API } from "../api";
-import { fakeNetwork } from "../test/testUtils.jsx";
+import { fakeNetwork } from "../test/testUtils";
 import App from "./App";
 
 // index.html shows a "Loading..." overlay (#app-loading) while the app's code

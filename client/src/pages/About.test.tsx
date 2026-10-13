@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import About from "./About";
 import { OpenLoginContext } from "../components/loginPopup";
-import { renderWithApp } from "../test/testUtils.jsx";
+import { renderWithApp } from "../test/testUtils";
 
 // "Join Us!" on the About page: a signed-in student goes to their page; a
 // visitor who isn't signed in gets the sign-in pop-up (signing in then opens

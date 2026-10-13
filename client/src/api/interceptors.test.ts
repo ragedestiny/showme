@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import axios from "axios";
 import { setupInterceptors } from "./interceptors";
-import { fakeNetwork } from "../test/testUtils.jsx";
+import { fakeNetwork } from "../test/testUtils";
 
 // A fresh axios copy per test, wired to the pretend network, plus a fake
 // store that just records which actions were sent.

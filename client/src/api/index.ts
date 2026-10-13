@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Every request goes to /api on this same site. A proxy forwards it to the
-// backend: src/setupProxy.js during `npm start`, public/_redirects on Netlify.
+// backend: the proxy in vite.config.ts during `npm start`, public/_redirects on Netlify.
 // Because the browser only ever talks to this site, it automatically sends the
 // httpOnly login cookie with each request; no code here touches the token.
 export const API = axios.create({ baseURL: "/api" });
@@ -30,7 +30,7 @@ export const updatePendingApprovalSentences = (status, sentence) =>
   API.patch("/Admin", { status, sentence });
 
 // On a fresh load of some pages, index.html starts a request before the app's
-// code has even downloaded (see vite.config.js). Each one is handed over once:
+// code has even downloaded (see vite.config.ts). Each one is handed over once:
 // coming back to the page later asks the server again, for a fresh answer.
 const takeEarlyRequest = (path) => {
   const early = window.earlyRequests?.[path];

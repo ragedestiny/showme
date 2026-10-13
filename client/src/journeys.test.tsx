@@ -6,7 +6,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import reducers from "./reducers";
 import { API } from "./api";
 import { setupInterceptors } from "./api/interceptors";
-import { fakeNetwork } from "./test/testUtils.jsx";
+import { fakeNetwork } from "./test/testUtils";
 import App from "./components/App";
 
 // Whole-app journeys: the real App (menu, pages, and the login check it starts

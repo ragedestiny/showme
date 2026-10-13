@@ -12,5 +12,5 @@ export const DisplayCollectionSentences = 12;
 // the full photo without its sides, wide enough for the widest such screen,
 // so they look exactly the same with fewer bytes (about half). Used by
 // CarouselComp and by index.html's early download of the first photo
-// (vite.config.js).
+// (vite.config.ts).
 export const phoneCarouselMedia = "(max-width: 480px) and (max-aspect-ratio: 9/16)";

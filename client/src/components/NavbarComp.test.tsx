@@ -3,7 +3,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import NavbarComp from "./NavbarComp";
-import { renderWithApp } from "../test/testUtils.jsx";
+import { renderWithApp } from "../test/testUtils";
 
 // Going to /login directly (an old bookmark, or typing the address) must open
 // the sign-in pop-up over the home page, like the navbar's Login link does,
