@@ -97,10 +97,11 @@ function CardGrid({ sentences, tellSentences }) {
                   variant="body2"
                   sx={{ color: "text.secondary", textAlign: "right" }}
                 >
-                  {sentence.author.firstName +
-                    " " +
-                    sentence.author.lastName.slice(0, 1) +
-                    "."}
+                  {/* First name and last initial. Some accounts have no
+                      last name (the database doesn't require one). */}
+                  {sentence.author.lastName
+                    ? `${sentence.author.firstName} ${sentence.author.lastName[0]}.`
+                    : sentence.author.firstName}
                 </Typography>
               </CardContent>
               <CardActions>

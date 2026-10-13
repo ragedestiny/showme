@@ -87,4 +87,20 @@ describe("Cards", () => {
     expect(screen.getByText("Newer 1")).toBeInTheDocument();
     expect(placeholders()).toHaveLength(2);
   });
+
+  // The database doesn't require a last name: older accounts, and Google
+  // accounts without one, have none (or an empty one). One such card used to
+  // stop the whole Collections page from drawing.
+  it("shows just the first name when the author has no last name", () => {
+    const [ada, bo, cy] = approved(3);
+    renderCards([
+      ada,
+      { ...bo, author: { firstName: "Bo" } },
+      { ...cy, author: { firstName: "Cy", lastName: "" } },
+    ]);
+
+    expect(screen.getByText("Ada L.")).toBeInTheDocument();
+    expect(screen.getByText("Bo")).toBeInTheDocument();
+    expect(screen.getByText("Cy")).toBeInTheDocument();
+  });
 });

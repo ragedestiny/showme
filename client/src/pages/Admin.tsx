@@ -109,9 +109,10 @@ function Admin() {
                           >
                             <th width="15%">
                               <span className="ms-2">
-                                {sentence.author.firstName +
-                                  " " +
-                                  sentence.author.lastName}
+                                {/* Some accounts have no last name */}
+                                {sentence.author.lastName
+                                  ? `${sentence.author.firstName} ${sentence.author.lastName}`
+                                  : sentence.author.firstName}
                               </span>
                             </th>
                             <td className="align-middle" width="55%">

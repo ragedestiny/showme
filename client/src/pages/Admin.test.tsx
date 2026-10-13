@@ -157,4 +157,19 @@ describe("Admin", () => {
     });
     expect(JSON.parse(patch.data).sentence.show).toBe("The road shimmered.");
   });
+
+  // The database doesn't require a last name (older accounts, and Google
+  // accounts without one)
+  it("shows just the first name of a student who has no last name", async () => {
+    const { store } = renderAdmin();
+    await screen.findByText("Mia Torres"); // the queue has arrived
+
+    store.dispatch({
+      type: "FETCH_APPROVAL",
+      payload: [{ ...waiting[0], author: { firstName: "Bo" } }],
+    });
+
+    expect(await screen.findByText("Bo")).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/)).not.toBeInTheDocument();
+  });
 });
