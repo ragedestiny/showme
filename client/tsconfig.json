@@ -1,0 +1,14 @@
+// TypeScript checks the client's code without running it (`npm run
+// typecheck`). It never builds the site: Vite does that, and simply drops the
+// types. The code runs in two places, which know about different things (the
+// browser has `window`, Node has `process`), so there are two parts, as in
+// Vite's official React + TypeScript starter:
+// - tsconfig.app.json: the site itself and its tests (src/), for the browser
+// - tsconfig.node.json: vite.config.ts and the build scripts, for Node
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

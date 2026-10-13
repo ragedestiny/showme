@@ -92,6 +92,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # TypeScript checks the code without running it (client/tsconfig.json)
+      - name: Type Check
+        run: npm run typecheck
+
       - name: Lint
         run: npm run lint
 
@@ -206,7 +210,7 @@ jobs:
 
     steps:
       # The site writes the commit it was built from into /version.txt (see
-      # client/vite.config.js) and the backend reports its own at /version.
+      # client/vite.config.ts) and the backend reports its own at /version.
       # Testing before both run this commit would test a mix of old and new,
       # so wait (up to 10 minutes) until both do.
       - name: Wait until the staging site and backend both run this commit

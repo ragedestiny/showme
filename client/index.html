@@ -18,7 +18,7 @@
       rel="stylesheet"
     />
     <!-- Bootstrap's styles come with the app's own stylesheet (imported in
-         src/index.jsx), so no separate copy is loaded from a CDN -->
+         src/index.tsx), so no separate copy is loaded from a CDN -->
     <link rel="stylesheet" href="/styles.css" />
     <title>Show And Tell</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -26,7 +26,7 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <!-- Shown while the app's code downloads, until the app has drawn its
-         first screen (App.jsx removes it): the same "Loading..." overlay the
+         first screen (App.tsx removes it): the same "Loading..." overlay the
          pages use, styled in styles.css. It fades in after 0.3 s, so a quick
          load never flashes it -->
     <div id="app-loading" role="status">
@@ -41,6 +41,6 @@
     </div>
     <div id="root"></div>
     <!-- Vite starts building the app from here -->
-    <script type="module" src="/src/index.jsx"></script>
+    <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>
