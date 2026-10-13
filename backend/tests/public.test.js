@@ -29,6 +29,30 @@ describe("GET /Collections (approved sentences)", () => {
     expect(res.body[0].author.firstName).toBe("Ada");
   });
 
+  // Anyone can load this page, so it must show a student's name and nothing
+  // else from their profile: not their email, Google account id (`id`),
+  // admin flag or login token version.
+  it("shows only each author's name, never the rest of their profile", async () => {
+    const ada = await createUser();
+    const alan = await createUser({
+      id: "google-user-2",
+      firstName: "Alan",
+      lastName: "Turing",
+      email: "alan@example.com",
+    });
+    await createSentence(ada, { approved: true, createdAt: new Date("2024-01-01") });
+    await createSentence(alan, { approved: true, createdAt: new Date("2024-02-01") });
+
+    const res = await request(app).get("/Collections");
+
+    expect(res.status).toBe(200);
+    // Exactly these fields: any other field on an author fails the test
+    expect(res.body.map((s) => s.author)).toStrictEqual([
+      { firstName: "Alan", lastName: "Turing" },
+      { firstName: "Ada", lastName: "Lovelace" },
+    ]);
+  });
+
   it("keeps newest first even for sentences written within the same second", async () => {
     const user = await createUser();
     // Saved first, 350 ms older: the database would hand it back first

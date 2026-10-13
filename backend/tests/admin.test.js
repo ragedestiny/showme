@@ -50,6 +50,22 @@ describe("GET /Admin", () => {
     expect(res.body[0].author.firstName).toBe("Ada");
   });
 
+  // The review page shows only the author's name, so that's all it gets: not
+  // their email, Google account id (`id`), admin flag or login token version.
+  it("shows only each author's name, never the rest of their profile", async () => {
+    const admin = await createAdmin();
+    const user = await createUser();
+    await createSentence(user);
+
+    const res = await request(app).get("/Admin").set("Cookie", sessionCookie(admin));
+
+    expect(res.status).toBe(200);
+    // Exactly these fields: any other field on an author fails the test
+    expect(res.body.map((s) => s.author)).toStrictEqual([
+      { firstName: "Ada", lastName: "Lovelace" },
+    ]);
+  });
+
   it("keeps newest first even for sentences written within the same second", async () => {
     const admin = await createAdmin();
     const user = await createUser();
@@ -91,6 +107,8 @@ describe("PATCH /Admin", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.map((s) => s.show)).toEqual(["still waiting"]);
+    // The queue sent back shows only the author's name too (see GET /Admin)
+    expect(res.body[0].author).toStrictEqual({ firstName: "Ada", lastName: "Lovelace" });
     const saved = await Sentence.findById(target._id);
     expect(saved.approved).toBe(true);
     expect(saved.toRedo).toBe(false);
