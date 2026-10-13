@@ -64,6 +64,8 @@ describe("GET /Admin", () => {
     expect(res.body.map((s) => s.author)).toStrictEqual([
       { firstName: "Ada", lastName: "Lovelace" },
     ]);
+    // Each sentence also stores its author's Google account id, as GID
+    expect(res.body[0]).not.toHaveProperty("GID");
   });
 
   it("keeps newest first even for sentences written within the same second", async () => {
@@ -109,6 +111,7 @@ describe("PATCH /Admin", () => {
     expect(res.body.map((s) => s.show)).toEqual(["still waiting"]);
     // The queue sent back shows only the author's name too (see GET /Admin)
     expect(res.body[0].author).toStrictEqual({ firstName: "Ada", lastName: "Lovelace" });
+    expect(res.body[0]).not.toHaveProperty("GID");
     const saved = await Sentence.findById(target._id);
     expect(saved.approved).toBe(true);
     expect(saved.toRedo).toBe(false);

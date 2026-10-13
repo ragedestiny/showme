@@ -51,6 +51,10 @@ describe("GET /Collections (approved sentences)", () => {
       { firstName: "Alan", lastName: "Turing" },
       { firstName: "Ada", lastName: "Lovelace" },
     ]);
+    // Each sentence also stores its author's Google account id, as GID
+    for (const sentence of res.body) {
+      expect(sentence).not.toHaveProperty("GID");
+    }
   });
 
   it("keeps newest first even for sentences written within the same second", async () => {

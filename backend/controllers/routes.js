@@ -41,10 +41,14 @@ const newestFirst = (sentences) =>
 // in. Used by the review queue (/Admin, admins only) and Collections (anyone,
 // no login needed). Both pages show only the author's name, so only the name
 // is sent: the rest of a profile holds the student's email, their Google
-// account id and their login details.
+// account id and their login details. A sentence's own GID is that same
+// Google account id, so it's left out too.
 const sentencesWithAuthorNames = async (filter) =>
   newestFirst(
-    await Sentence.find(filter).populate("author", "firstName lastName -_id")
+    await Sentence.find(filter, "-GID").populate(
+      "author",
+      "firstName lastName -_id"
+    )
   );
 
 export const createNewUserSentence = async (req, res) => {
