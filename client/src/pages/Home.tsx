@@ -6,7 +6,7 @@ import tell from "../tellData";
 function Home() {
   return (
     <div className="contenthome">
-      <CarouselComp sliderdata={tell} />;
+      <CarouselComp sliderdata={tell} />
     </div>
   );
 }
