@@ -33,6 +33,13 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Node.js's type definitions must describe the Node version that runs
+      # the code: 24 ("engines" in package.json, the workflows' node-version).
+      # A newer major describes features Node 24 doesn't have, so TypeScript
+      # would accept code that crashes. Move it together with Node itself.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   # The client's npm libraries (client/package.json / package-lock.json),
   # with the same rules
@@ -53,6 +60,17 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # As in the backend: Node 24 builds the site (NODE_VERSION in
+      # client/netlify.toml, the workflows' node-version)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # The linter's TypeScript support (typescript-eslint) works only with
+      # TypeScript below 6.1, and npm refuses to install a newer one next to
+      # it, which would fail the whole minor-and-patch PR. Remove this once
+      # typescript-eslint supports newer versions.
+      - dependency-name: "typescript"
+        versions: [">=6.1.0"]
 
   # The GitHub Actions the workflows use (checkout, setup-node, auth, QA Wolf)
   - package-ecosystem: "github-actions"
