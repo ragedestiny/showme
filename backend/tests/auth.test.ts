@@ -59,6 +59,25 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
     expect(res.body.user.id).toBe("google-new-user");
   });
 
+  // Google doesn't always send a first name (given_name is optional in its
+  // tokens). Such a student must still be able to log in. The stand-in is
+  // "Student", never part of their email, because the name shows on
+  // Collections, which anyone can see.
+  it.each([
+    ["no first name", {}],
+    ["an empty first name", { given_name: "" }],
+  ])("lets an account with %s log in, as \"Student\"", async (_, names) => {
+    const { given_name, ...rest } = googlePayload;
+    verifyIdToken.mockResolvedValue({ getPayload: () => ({ ...rest, ...names }) });
+
+    const res = await request(app).post("/auth").send({ token: "t" });
+
+    expect(res.status).toBe(200);
+    const saved = await Profile.findOne({ id: "google-new-user" });
+    expect(saved.firstName).toBe("Student");
+    expect(saved.lastName).toBe("Torvalds");
+  });
+
   it("reuses the existing profile on later logins", async () => {
     await request(app).post("/auth").send({ token: "t" });
     await request(app).post("/auth").send({ token: "t" });

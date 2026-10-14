@@ -60,7 +60,12 @@ export const googleAuth = async (req, res) => {
     let user = await Profile.findOne({ id: sub }).populate("ownSentences");
 
     if (!user) {
-      const fName = given_name.charAt(0).toUpperCase() + given_name.slice(1);
+      // Google doesn't always send a first name, and a profile needs one.
+      // "Student" stands in, never part of the email: the name shows on
+      // Collections, which anyone can see.
+      const fName = given_name
+        ? given_name.charAt(0).toUpperCase() + given_name.slice(1)
+        : "Student";
       const lName = family_name
         ? family_name.charAt(0).toUpperCase() + family_name.slice(1)
         : "";
