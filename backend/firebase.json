@@ -3,6 +3,9 @@
     {
       "source": ".",
       "codebase": "default",
+      "predeploy": [
+        "npm run build"
+      ],
       "ignore": [
         "node_modules",
         ".git",

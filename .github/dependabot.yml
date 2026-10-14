@@ -1,6 +1,6 @@
 # Dependabot opens pull requests when the libraries this project uses release
-# new versions, separately for backend/ and client/. Every PR runs the backend
-# tests and the client's lint, tests and build
+# new versions, separately for backend/ and client/. Every PR runs both
+# halves' type check, tests and build, plus the client's lint
 # (.github/workflows/test-and-deploy-staging.yml) and gets a Netlify deploy
 # preview; a person reviews and merges it (merging to staging deploys
 # staging).

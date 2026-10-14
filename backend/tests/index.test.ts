@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { logger } from "firebase-functions/logger";
 
-// index.js is what Firebase deploys. Importing it here (without a database
-// connection string) checks what gets exported and with which settings.
+// index.ts is what Firebase deploys (built into lib/index.js). Importing it
+// here (without a database connection string) checks what gets exported and
+// with which settings.
 // __endpoint is the description Firebase reads at deploy.
 // (Without a connection string it logs an error; keep that out of the output.)
 vi.spyOn(logger, "error").mockImplementation(() => {});

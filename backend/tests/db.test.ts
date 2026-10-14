@@ -8,7 +8,7 @@ describe("connectWithRetry (connecting to MongoDB when a server starts)", () => 
       .fn()
       .mockRejectedValueOnce(new Error("Could not connect to any servers"))
       .mockRejectedValueOnce(new Error("Could not connect to any servers"))
-      .mockResolvedValueOnce();
+      .mockResolvedValueOnce(undefined);
     const log = vi.fn();
 
     const attempts = await connectWithRetry(connect, { retryDelayMs: 1, log });
@@ -21,7 +21,7 @@ describe("connectWithRetry (connecting to MongoDB when a server starts)", () => 
   });
 
   it("connects once and logs nothing when the first try works", async () => {
-    const connect = vi.fn().mockResolvedValue();
+    const connect = vi.fn().mockResolvedValue(undefined);
     const log = vi.fn();
 
     const attempts = await connectWithRetry(connect, { retryDelayMs: 1, log });
@@ -35,7 +35,7 @@ describe("connectWithRetry (connecting to MongoDB when a server starts)", () => 
     const connect = vi
       .fn()
       .mockRejectedValueOnce(new Error("down"))
-      .mockResolvedValueOnce();
+      .mockResolvedValueOnce(undefined);
 
     const done = connectWithRetry(connect, { retryDelayMs: 5000, log: () => {} });
     await vi.advanceTimersByTimeAsync(4999);

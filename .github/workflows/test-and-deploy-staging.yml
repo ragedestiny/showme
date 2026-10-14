@@ -3,8 +3,9 @@ name: Test, and deploy staging
 # One workflow for both halves of the site, backend/ and client/.
 #
 # On every pull request, and every push to staging or main:
-#   - "Backend tests" and "Client checks" (lint, tests, build) run side by
-#     side, whichever half the change touched: each takes about a minute.
+#   - "Backend tests" (type check, tests, build) and "Client checks" (type
+#     check, lint, tests, build) run side by side, whichever half the change
+#     touched: each takes about a minute.
 #
 # Pull requests merge into the `staging` branch. After a merge, if every
 # check passed:
@@ -67,8 +68,17 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # Strict TypeScript, tests included (tsconfig.json). The deploy's build
+      # only removes the types, so this is where type errors are caught.
+      - name: Type Check
+        run: npm run typecheck
+
       - name: Run Tests
         run: npm test
+
+      # The JavaScript Firebase will run (lib/), as the deploy builds it
+      - name: Build
+        run: npm run build
 
   client:
     name: Client checks

@@ -36,4 +36,7 @@ const sentenceSchema = new mongoose.Schema({
 // Creating mongoose model
 const Sentence = mongoose.model("Sentence", sentenceSchema);
 
+// A sentence's fields, as TypeScript reads them from the schema above
+export type SentenceFields = mongoose.InferSchemaType<typeof sentenceSchema>;
+
 export { Sentence };

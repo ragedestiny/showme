@@ -1041,7 +1041,7 @@
       "id": 12,
       "type": "timeseries",
       "title": "Servers running",
-      "description": "Copies of the backend over time. Active = handling requests; idle = kept warm for the next one. index.js caps this at 10.",
+      "description": "Copies of the backend over time. Active = handling requests; idle = kept warm for the next one. index.ts caps this at 10.",
       "gridPos": {
         "x": 0,
         "y": 16,
@@ -1303,7 +1303,7 @@
       "id": 16,
       "type": "logs",
       "title": "Recent requests",
-      "description": "The newest request lines from requestLog.js. Open one for its fields (path, status, durationMs, userId).",
+      "description": "The newest request lines from requestLog.ts. Open one for its fields (path, status, durationMs, userId).",
       "gridPos": {
         "x": 0,
         "y": 34,

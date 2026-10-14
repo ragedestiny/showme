@@ -4,7 +4,7 @@ import express from "express";
 import app from "../app.js";
 import Profile from "../models/profile.js";
 import { Sentence } from "../models/sentences.js";
-import { createSentence, createUser, sessionCookie } from "./helpers.js";
+import { createSentence, createUser, sessionCookie, showsIn } from "./helpers.js";
 
 const otherUser = () =>
   createUser({ id: "google-user-2", firstName: "Alan", email: "alan@example.com" });
@@ -14,7 +14,7 @@ describe("/MyPage requires a valid token", () => {
     ["get", "/MyPage"],
     ["post", "/MyPage"],
     ["patch", "/MyPage"],
-  ])("%s %s without a token returns 401", async (method, path) => {
+  ] as const)("%s %s without a token returns 401", async (method, path) => {
     const res = await request(app)[method](path);
     expect(res.status).toBe(401);
   });
@@ -30,7 +30,7 @@ describe("GET /MyPage", () => {
     const res = await request(app).get("/MyPage").set("Cookie", sessionCookie(ada));
 
     expect(res.status).toBe(200);
-    expect(res.body.map((s) => s.show)).toEqual(["Ada's sentence"]);
+    expect(showsIn(res)).toEqual(["Ada's sentence"]);
   });
 });
 
@@ -51,7 +51,7 @@ describe("POST /MyPage", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.show).toBe("Frost bit my fingers.");
-    const profile = await Profile.findById(ada._id);
+    const profile = await Profile.findById(ada._id).orFail();
     expect(profile.ownSentences.map(String)).toEqual([res.body._id]);
   });
 
@@ -72,11 +72,11 @@ describe("POST /MyPage", () => {
       });
 
     expect(res.status).toBe(201);
-    const saved = await Sentence.findById(res.body._id);
+    const saved = await Sentence.findById(res.body._id).orFail();
     expect(saved.GID).toBe(ada.id);
     expect(String(saved.author)).toBe(String(ada._id));
-    const adaProfile = await Profile.findById(ada._id);
-    const alanProfile = await Profile.findById(alan._id);
+    const adaProfile = await Profile.findById(ada._id).orFail();
+    const alanProfile = await Profile.findById(alan._id).orFail();
     expect(adaProfile.ownSentences.map(String)).toContain(res.body._id);
     expect(alanProfile.ownSentences).toHaveLength(0);
   });
@@ -105,7 +105,7 @@ describe("POST /MyPage", () => {
 
       expect(res.status).toBe(400);
       expect(await Sentence.countDocuments({ GID: ada.id })).toBe(0);
-      const profile = await Profile.findById(ada._id);
+      const profile = await Profile.findById(ada._id).orFail();
       expect(profile.ownSentences).toEqual([]);
     }
   );
@@ -120,7 +120,7 @@ describe("request size limit", () => {
     // uploading at that moment, it can see the connection cut (ECONNRESET)
     // before it reads the 413. Both mean "refused"; what matters is that
     // nothing was saved.
-    let outcome;
+    let outcome: number | string | undefined;
     try {
       const res = await request(app)
         .post("/MyPage")
@@ -128,7 +128,7 @@ describe("request size limit", () => {
         .send({ title: "Day 1", tell: "x", show: "x".repeat(1024 * 1024 + 1) });
       outcome = res.status;
     } catch (error) {
-      outcome = error.code;
+      outcome = (error as NodeJS.ErrnoException).code;
     }
 
     expect([413, "ECONNRESET", "EPIPE"]).toContain(outcome);
@@ -195,7 +195,7 @@ describe("PATCH /MyPage", () => {
         .send({ title: "Day 1", show });
 
       expect(res.status).toBe(400);
-      const saved = await Sentence.findOne({ GID: ada.id, title: "Day 1" });
+      const saved = await Sentence.findOne({ GID: ada.id, title: "Day 1" }).orFail();
       expect(saved.show).toBe("Keep me.");
       expect(saved.approved).toBe(true);
     }
@@ -215,7 +215,7 @@ describe("PATCH /MyPage", () => {
         .send({ title, show: "Overwritten" });
 
       expect(res.status).toBe(400);
-      const saved = await Sentence.findOne({ GID: ada.id, title: "Day 1" });
+      const saved = await Sentence.findOne({ GID: ada.id, title: "Day 1" }).orFail();
       expect(saved.show).toBe("Keep me.");
     }
   );

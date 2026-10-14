@@ -6,7 +6,7 @@ It reads straight from Google Cloud, so nothing is copied out of Google:
 - **Metrics** that Cloud Run records for the `apiv2` service by itself
   (requests, failures, response time, servers, memory), through the
   **Google Cloud Monitoring** data source. These are free.
-- **Log lines** written by `backend/middlewares/requestLog.js`, through the
+- **Log lines** written by `backend/middlewares/requestLog.ts`, through the
   **Google Cloud Logging** data source.
 
 The **Environment** dropdown at the top switches every panel between

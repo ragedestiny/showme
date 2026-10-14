@@ -1,0 +1,18 @@
+// `npm run build` turns the TypeScript into the JavaScript Firebase runs:
+// everything but the tests, written to lib/ in the same layout (index.ts
+// becomes lib/index.js, the "main" in package.json). firebase.json runs it
+// before every deploy, so a deploy always gets the current code.
+// The other settings come from tsconfig.json.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    // Only remove the types, like Vite does for the client. Checking is
+    // `npm run typecheck`'s job (a CI step), so a type error stops a pull
+    // request instead of failing halfway through a deploy.
+    "noCheck": true,
+    "rootDir": ".",
+    "outDir": "lib"
+  },
+  "exclude": ["node_modules", "lib", "tests", "vitest.config.ts"]
+}

@@ -1,4 +1,5 @@
 import { logger } from "firebase-functions/logger";
+import { messageOf } from "../utils/errors.js";
 
 // Connect to MongoDB, and keep trying until it works.
 //
@@ -11,16 +12,19 @@ import { logger } from "firebase-functions/logger";
 // Each failed attempt is a WARNING, not an ERROR: the next try usually works.
 // If it never does, every request fails and those are logged as errors.
 export const connectWithRetry = async (
-  connect,
-  { retryDelayMs = 5000, log = logger.warn } = {}
-) => {
+  connect: () => Promise<unknown>,
+  {
+    retryDelayMs = 5000,
+    log = logger.warn,
+  }: { retryDelayMs?: number; log?: (message: string) => void } = {}
+): Promise<number> => {
   for (let attempt = 1; ; attempt++) {
     try {
       await connect();
       return attempt;
     } catch (error) {
       log(
-        `MongoDB connection attempt ${attempt} failed: ${error.message}. ` +
+        `MongoDB connection attempt ${attempt} failed: ${messageOf(error)}. ` +
           `Retrying in ${retryDelayMs / 1000}s.`
       );
       await new Promise((resolve) => setTimeout(resolve, retryDelayMs));

@@ -51,4 +51,7 @@ const profileSchema = new mongoose.Schema({
 
 const Profile = mongoose.model("Profile", profileSchema);
 
+// A profile's fields, as TypeScript reads them from the schema above
+export type ProfileFields = mongoose.InferSchemaType<typeof profileSchema>;
+
 export default Profile;

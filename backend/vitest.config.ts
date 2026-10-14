@@ -4,9 +4,9 @@ export default defineConfig({
   test: {
     environment: "node",
     // Runs once before everything: makes sure the MongoDB program is downloaded.
-    globalSetup: ["./tests/globalSetup.js"],
+    globalSetup: ["./tests/globalSetup.ts"],
     // Runs before every test file: starts an in-memory MongoDB.
-    setupFiles: ["./tests/setup.js"],
+    setupFiles: ["./tests/setup.ts"],
     // Each test file runs in its own process with its own database and its own
     // copy of mongoose, so files can't see each other's data.
     pool: "forks",

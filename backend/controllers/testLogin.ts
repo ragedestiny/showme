@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
+import type { Request, Response } from "express";
 import Profile from "../models/profile.js";
 import { Sentence } from "../models/sentences.js";
+import { messageOf } from "../utils/errors.js";
 import { startSession } from "./auth.js";
 
 // A login door for automated browser tests (QA Wolf) on the STAGING backend.
@@ -24,7 +26,15 @@ const MIN_SECRET_LENGTH = 32;
 
 // Every test student has the same name, so pages show "Test S." whichever
 // one a test uses; only the id and email (built from the role) differ
-const testStudent = (role) => ({
+interface TestAccount {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  isAdmin: boolean;
+}
+
+const testStudent = (role: string): TestAccount => ({
   id: `test-${role}`,
   firstName: "Test",
   lastName: "Student",
@@ -32,7 +42,7 @@ const testStudent = (role) => ({
   isAdmin: false,
 });
 
-const TEST_ACCOUNTS = {
+const TEST_ACCOUNTS: Record<string, TestAccount> = {
   student: testStudent("student"),
   "student-approve": testStudent("student-approve"),
   "student-redo": testStudent("student-redo"),
@@ -67,18 +77,20 @@ const doorIsOpen = () =>
 // Compare secrets in constant time, so an attacker can't learn the secret one
 // character at a time by measuring how fast wrong guesses are rejected.
 // (Hashing first makes both sides the same length, which the compare needs.)
-const sameSecret = (given, expected) => {
-  const hash = (text) => crypto.createHash("sha256").update(String(text)).digest();
+const sameSecret = (given: unknown, expected: string) => {
+  const hash = (text: unknown) =>
+    crypto.createHash("sha256").update(String(text)).digest();
   return crypto.timingSafeEqual(hash(given), hash(expected));
 };
 
-export const testLogin = async (req, res) => {
+export const testLogin = async (req: Request, res: Response) => {
   if (!doorIsOpen()) {
     return res.status(404).json({ message: "Not found" });
   }
 
   const { secret, role, fresh } = req.body ?? {};
-  if (!secret || !sameSecret(secret, process.env.TEST_LOGIN_SECRET)) {
+  // (doorIsOpen() has checked TEST_LOGIN_SECRET is set)
+  if (!secret || !sameSecret(secret, process.env.TEST_LOGIN_SECRET ?? "")) {
     return res.status(401).json({ message: "Invalid test login secret" });
   }
 
@@ -107,8 +119,10 @@ export const testLogin = async (req, res) => {
 
     startSession(res, user);
   } catch (error) {
-    // Saved for this request's log line (see middlewares/requestLog.js)
+    // Saved for this request's log line (see middlewares/requestLog.ts)
     res.locals.error = error;
-    res.status(500).json({ message: "Test login failed", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Test login failed", error: messageOf(error) });
   }
 };

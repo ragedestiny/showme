@@ -1,4 +1,6 @@
+import type { NextFunction, Request, Response } from "express";
 import { logger } from "firebase-functions/logger";
+import { messageOf } from "../utils/errors.js";
 
 // Writes one log line for every request, once the answer has been sent:
 //
@@ -16,7 +18,7 @@ import { logger } from "firebase-functions/logger";
 // What never goes in: cookies, tokens, request bodies (students' sentences)
 // and query strings. Logs are kept for 30 days and anyone with access to the
 // Google Cloud project can read them.
-const requestLog = (req, res, next) => {
+const requestLog = (req: Request, res: Response, next: NextFunction) => {
   const start = performance.now();
   const { method, path } = req;
 
@@ -46,7 +48,12 @@ const requestLog = (req, res, next) => {
       version: process.env.APP_VERSION || "local",
       // Error Reporting reads stack_trace, groups the same failure together
       // and counts how often it happens
-      ...(error && { error: error.message, stack_trace: error.stack }),
+      ...(error
+        ? {
+            error: messageOf(error),
+            stack_trace: error instanceof Error ? error.stack : undefined,
+          }
+        : {}),
     });
   });
 

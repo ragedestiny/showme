@@ -1,10 +1,10 @@
 // The data the backend sends, as the website uses it (see backend/models/ and
-// backend/controllers/routes.js). Only the fields the website reads are
+// backend/controllers/routes.ts). Only the fields the website reads are
 // listed. TypeScript checks the website's code against these, but it can't
 // check that the server really sends them: if the backend changes what it
 // sends, change this file too.
 
-// A day's tell sentence, from GET / (backend/public/tellList.js)
+// A day's tell sentence, from GET / (backend/public/tellList.ts)
 export interface TellSentence {
   key: number;
   title: string; // "Day 1"
@@ -12,7 +12,7 @@ export interface TellSentence {
   image: string; // its picture on the Collections page
 }
 
-// The signed-in user, from GET /Login (backend/models/profile.js)
+// The signed-in user, from GET /Login (backend/models/profile.ts)
 export interface User {
   id: string; // the Google account's id
   firstName: string;
@@ -23,7 +23,7 @@ export interface User {
   isAdmin: boolean;
 }
 
-// A student's sentence (backend/models/sentences.js), as GET /MyPage sends them
+// A student's sentence (backend/models/sentences.ts), as GET /MyPage sends them
 export interface Sentence {
   _id: string;
   title: string; // the day it was written for: "day1", "day2", ...
