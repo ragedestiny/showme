@@ -77,7 +77,7 @@ export const googleAuth = async (req, res) => {
 
     startSession(res, user);
   } catch (error) {
-    // Saved for this request's log line (see middlewares/requestLog.js)
+    // Saved for this request's log line (see middlewares/requestLog.ts)
     res.locals.error = error;
     res
       .status(500)

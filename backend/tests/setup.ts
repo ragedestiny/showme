@@ -9,7 +9,7 @@ let mongod;
 // read them from logger.write's calls instead.
 vi.spyOn(logger, "write").mockImplementation(() => {});
 
-// Start a throwaway MongoDB and point mongoose at it, just as index.js
+// Start a throwaway MongoDB and point mongoose at it, just as index.ts
 // connects to Atlas in production.
 beforeAll(async () => {
   mongod = await MongoMemoryServer.create();

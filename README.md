@@ -62,7 +62,9 @@ Backend (runs in the Firebase emulator):
 
 `npm install`
 
-`npm start`
+`npm start` (turns the TypeScript into JavaScript in `lib/`, then starts the emulator)
+
+While it runs, `npm run build:watch` in a second terminal rebuilds on every save, and the emulator reloads the new code.
 
 Client (http://localhost:3000, which forwards `/api` calls to the emulator):
 

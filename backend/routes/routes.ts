@@ -27,7 +27,7 @@ router.get("/version", (req, res) => {
 });
 
 router.post("/auth", googleAuth); // Google authentication route
-// Login for automated browser tests; only works on staging (see testLogin.js)
+// Login for automated browser tests; only works on staging (see controllers/testLogin.ts)
 router.post("/auth/test", testLogin);
 
 // Route for create/update/fetch user sentences

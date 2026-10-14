@@ -5,7 +5,7 @@ import Profile from "../models/profile.js";
 import { Sentence } from "../models/sentences.js";
 
 // The log line written for the one request to `path` (see
-// middlewares/requestLog.js). tests/setup.js replaces logger.write with a
+// middlewares/requestLog.ts). tests/setup.ts replaces logger.write with a
 // fake, so this reads what would have been written. The line is written when
 // the response finishes, which can be a moment after supertest has the answer.
 export const logLineFor = (path) =>
@@ -36,7 +36,7 @@ export const createAdmin = (overrides = {}) =>
     ...overrides,
   });
 
-// Sign a JWT exactly the way controllers/auth.js does after a Google login.
+// Sign a JWT exactly the way controllers/auth.ts does after a Google login.
 export const tokenFor = (user, options = { expiresIn: "1h" }) =>
   jwt.sign({ id: user.id, v: user.tokenVersion ?? 0 }, process.env.JWT_SECRET, options);
 

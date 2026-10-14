@@ -8,6 +8,8 @@ node_modules/
 build/
 dist/
 coverage/
+# The backend's JavaScript, built from its TypeScript (Firebase runs this)
+backend/lib/
 
 # Secret settings: never commit these
 .env

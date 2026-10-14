@@ -1,0 +1,32 @@
+// `npm run build` turns the TypeScript into the JavaScript Firebase runs:
+// everything but the tests, written to lib/ in the same layout (index.ts
+// becomes lib/index.js, the "main" in package.json). firebase.json runs it
+// before every deploy, so a deploy always gets the current code.
+{
+  "compilerOptions": {
+    // What Node 24 understands ("engines" in package.json)
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    // Node's own rules for ES modules ("type": "module" in package.json).
+    // Imports name the .js file the build writes ("./app.js"), which
+    // TypeScript finds as app.ts.
+    "module": "NodeNext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    // Only remove the types, like Vite does for the client: no type
+    // checking here, so a deploy can't fail halfway on a type error
+    "noCheck": true,
+    // Keep TypeScript "JavaScript plus types", so removing the types is all
+    // the build has to do: type-only imports say so (`import type`), and
+    // TypeScript-only features that generate code (enums, namespaces) aren't
+    // used
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+
+    "rootDir": ".",
+    "outDir": "lib"
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "lib", "tests", "vitest.config.ts"]
+}

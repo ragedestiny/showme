@@ -10,7 +10,7 @@ describe("GET / (tell sentences)", () => {
     const res = await request(app).get("/");
 
     expect(res.status).toBe(200);
-    // Straight from public/tellList.js: no database round trips, no _id fields.
+    // Straight from public/tellList.ts: no database round trips, no _id fields.
     expect(res.body).toEqual(tellList);
   });
 });

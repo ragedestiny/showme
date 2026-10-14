@@ -6,7 +6,7 @@ import { readSession } from "../middlewares/auth.js";
 import { SESSION_COOKIE, sessionCookieOptions } from "../config/session.js";
 
 // Route for getting the Tell Sentences. The list lives in the code
-// (public/tellList.js), so it's sent straight from memory with no database
+// (public/tellList.ts), so it's sent straight from memory with no database
 // round trips.
 export const getTellSentences = (req, res) => {
   res.status(200).json(tellList);
@@ -18,7 +18,7 @@ export const getUserSentences = async (req, res) => {
 
     res.status(200).json(userSentences);
   } catch (error) {
-    // Saved for this request's log line (see middlewares/requestLog.js)
+    // Saved for this request's log line (see middlewares/requestLog.ts)
     res.locals.error = error;
     res.status(404).json({ message: error.message });
   }

@@ -2,14 +2,16 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
   "type": "module",
   "scripts": {
     "start": "npm run emulators",
+    "build": "tsc -p tsconfig.build.json",
+    "build:watch": "tsc -p tsconfig.build.json --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "emulators": "npx --yes firebase-tools@15 emulators:start --only functions",
-    "seed:dev": "node --env-file=.env --env-file-if-exists=.env.local scripts/seed-dev.js"
+    "emulators": "npm run build && npx --yes firebase-tools@15 emulators:start --only functions",
+    "seed:dev": "npm run build && node --env-file=.env --env-file-if-exists=.env.local lib/scripts/seed-dev.js"
   },
   "keywords": [],
   "author": "",
@@ -28,8 +30,10 @@
     "node": "24"
   },
   "devDependencies": {
+    "@types/node": "^24.19.2",
     "mongodb-memory-server": "^11.3.0",
     "supertest": "^7.3.1",
+    "typescript": "~6.0.3",
     "vitest": "^5.0.3"
   }
 }
