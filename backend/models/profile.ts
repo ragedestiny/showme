@@ -2,9 +2,11 @@ import mongoose from "mongoose";
 
 // User profile Schema
 const profileSchema = new mongoose.Schema({
+  // The student's Google account id ("sub"). Profiles are found by it and
+  // login tokens carry it, so a profile can't be saved without one.
   id: {
     type: String,
-    default: "test",
+    required: true,
   },
   firstName: {
     type: String,
