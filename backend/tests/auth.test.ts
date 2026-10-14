@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import request from "supertest";
+import request, { type Response } from "supertest";
 import jwt from "jsonwebtoken";
 import { logger } from "firebase-functions/logger";
 import app from "../app.js";
+import { jwtSecret } from "../config/session.js";
 import Profile from "../models/profile.js";
 import {
   createSentence,
@@ -19,7 +20,7 @@ import {
 const { verifyIdToken } = vi.hoisted(() => ({ verifyIdToken: vi.fn() }));
 vi.mock("google-auth-library", () => ({
   OAuth2Client: class {
-    verifyIdToken(...args) {
+    verifyIdToken(...args: unknown[]) {
       return verifyIdToken(...args);
     }
   },
@@ -32,6 +33,17 @@ const googlePayload = {
   family_name: "torvalds",
   email: "linus@example.com",
 };
+
+// What's inside one of our login tokens. jsonwebtoken can't know; ours always
+// hold the Google id and when they were signed (iat) and expire (exp).
+interface TokenContents {
+  id: string;
+  v?: number;
+  iat: number;
+  exp: number;
+}
+const decode = (token: string) =>
+  jwt.verify(token, jwtSecret()) as TokenContents;
 
 beforeEach(() => {
   verifyIdToken.mockReset();
@@ -52,7 +64,7 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
     const res = await request(app).post("/auth").send({ token: "t" });
 
     expect(res.status).toBe(200);
-    const saved = await Profile.findOne({ id: "google-new-user" });
+    const saved = await Profile.findOne({ id: "google-new-user" }).orFail();
     expect(saved.firstName).toBe("Linus");
     expect(saved.lastName).toBe("Torvalds");
     expect(saved.email).toBe("linus@example.com");
@@ -73,7 +85,7 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
     const res = await request(app).post("/auth").send({ token: "t" });
 
     expect(res.status).toBe(200);
-    const saved = await Profile.findOne({ id: "google-new-user" });
+    const saved = await Profile.findOne({ id: "google-new-user" }).orFail();
     expect(saved.firstName).toBe("Student");
     expect(saved.lastName).toBe("Torvalds");
   });
@@ -88,7 +100,7 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
   it("returns a JWT holding the Google id that expires after 1 hour", async () => {
     const res = await request(app).post("/auth").send({ token: "t" });
 
-    const decoded = jwt.verify(tokenFromLogin(res), process.env.JWT_SECRET);
+    const decoded = decode(tokenFromLogin(res));
     expect(decoded.id).toBe("google-new-user");
     expect(decoded.exp - decoded.iat).toBe(60 * 60);
   });
@@ -105,7 +117,7 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
   it("sets the token in an httpOnly, Secure, SameSite=Lax session cookie", async () => {
     const res = await request(app).post("/auth").send({ token: "t" });
 
-    const cookie = res.headers["set-cookie"]?.find((c) => c.startsWith("session="));
+    const cookie = res.get("Set-Cookie")?.find((c) => c.startsWith("session="));
     expect(cookie).toBeDefined();
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("Secure");
@@ -116,8 +128,8 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
   it("makes the cookie last exactly as long as the token inside it", async () => {
     const res = await request(app).post("/auth").send({ token: "t" });
 
-    const cookie = res.headers["set-cookie"].find((c) => c.startsWith("session="));
-    const { iat, exp } = jwt.verify(tokenFromLogin(res), process.env.JWT_SECRET);
+    const cookie = res.get("Set-Cookie")?.find((c) => c.startsWith("session="));
+    const { iat, exp } = decode(tokenFromLogin(res));
     expect(cookie).toContain(`Max-Age=${exp - iat}`);
   });
 
@@ -147,12 +159,28 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
     expect(await Profile.countDocuments()).toBe(0);
   });
 
+  // Google's tokens always say which account (sub) and its email, but its
+  // types don't promise them, so the server checks rather than crash
+  it.each([
+    ["no payload", undefined],
+    ["no account id", { ...googlePayload, sub: undefined }],
+    ["no email", { ...googlePayload, email: undefined }],
+  ])("rejects a verified token with %s (401)", async (_, payload) => {
+    verifyIdToken.mockResolvedValue({ getPayload: () => payload });
+
+    const res = await request(app).post("/auth").send({ token: "t" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("Invalid Google token");
+    expect(await Profile.countDocuments()).toBe(0);
+  });
+
   it("logs a rejected Google token as a normal 401, without Google's message", async () => {
     // Google's error messages can contain the whole token
     verifyIdToken.mockRejectedValue(
       new Error("Wrong number of segments in token: forged-token-text")
     );
-    logger.write.mockClear();
+    vi.mocked(logger.write).mockClear();
 
     await request(app).post("/auth").send({ token: "forged-token-text" });
 
@@ -244,8 +272,8 @@ describe("auth middleware (via GET /Login)", () => {
 
 describe("POST /Logout", () => {
   // A cookie is deleted by sending it again with an expiry date in the past.
-  const clearsSessionCookie = (res) =>
-    res.headers["set-cookie"]?.some(
+  const clearsSessionCookie = (res: Response) =>
+    res.get("Set-Cookie")?.some(
       (c) => c.startsWith("session=;") && c.includes("Expires=Thu, 01 Jan 1970")
     );
 
@@ -283,7 +311,7 @@ describe("POST /Logout", () => {
     const user = await createUser();
     await request(app).post("/Logout").set("Cookie", sessionCookie(user));
 
-    const fresh = await Profile.findById(user._id); // now on version 1
+    const fresh = await Profile.findById(user._id).orFail(); // now on version 1
     const res = await request(app).get("/Login").set("Cookie", sessionCookie(fresh));
 
     expect(res.status).toBe(200);
@@ -309,13 +337,13 @@ describe("token version", () => {
 
     const res = await request(app).post("/auth").send({ token: "t" });
 
-    const decoded = jwt.verify(tokenFromLogin(res), process.env.JWT_SECRET);
+    const decoded = decode(tokenFromLogin(res));
     expect(decoded.v).toBe(3);
   });
 
   it("still accepts tokens issued before versions existed (no v), for users still on version 0", async () => {
     const user = await createUser();
-    const legacy = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const legacy = jwt.sign({ id: user.id }, jwtSecret(), { expiresIn: "1h" });
 
     const res = await request(app).get("/Login").set("Cookie", `session=${legacy}`);
 

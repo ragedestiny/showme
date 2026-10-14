@@ -1,18 +1,20 @@
+import type { Request, Response } from "express";
 import mongoose from "mongoose";
 import { Sentence } from "../models/sentences.js";
 import Profile from "../models/profile.js";
 import tellList from "../public/tellList.js";
 import { readSession } from "../middlewares/auth.js";
 import { SESSION_COOKIE, sessionCookieOptions } from "../config/session.js";
+import { messageOf } from "../utils/errors.js";
 
 // Route for getting the Tell Sentences. The list lives in the code
 // (public/tellList.ts), so it's sent straight from memory with no database
 // round trips.
-export const getTellSentences = (req, res) => {
+export const getTellSentences = (req: Request, res: Response) => {
   res.status(200).json(tellList);
 };
 
-export const getUserSentences = async (req, res) => {
+export const getUserSentences = async (req: Request, res: Response) => {
   try {
     const userSentences = await Sentence.find({ GID: req.userId });
 
@@ -20,22 +22,25 @@ export const getUserSentences = async (req, res) => {
   } catch (error) {
     // Saved for this request's log line (see middlewares/requestLog.ts)
     res.locals.error = error;
-    res.status(404).json({ message: error.message });
+    res.status(404).json({ message: messageOf(error) });
   }
 };
 
 // A show sentence must be text with something besides spaces and line breaks,
 // so a blank one can't use up a day or wipe out a written one. The website
 // checks this too, but anyone can send requests straight to the server.
-const isBlank = (show) => typeof show !== "string" || show.trim() === "";
+const isBlank = (show: unknown) =>
+  typeof show !== "string" || show.trim() === "";
 const BLANK_MESSAGE = "The show sentence can't be empty";
 
 // Newest first, to the millisecond. Not sorted by the database: some early
 // sentences hold their date as text, and the database puts every text date
 // after every real one. new Date() reads both kinds, keeping milliseconds
 // (unlike Date.parse on a Date, which drops them).
-const newestFirst = (sentences) =>
-  sentences.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+const newestFirst = <T extends { createdAt: Date }>(sentences: T[]) =>
+  sentences.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
 // Sentences matching `filter`, newest first, with each author's name filled
 // in. Used by the review queue (/Admin, admins only) and Collections (anyone,
@@ -43,7 +48,10 @@ const newestFirst = (sentences) =>
 // is sent: the rest of a profile holds the student's email, their Google
 // account id and their login details. A sentence's own GID is that same
 // Google account id, so it's left out too.
-const sentencesWithAuthorNames = async (filter) =>
+const sentencesWithAuthorNames = async (filter: {
+  approved: boolean;
+  toRedo?: boolean;
+}) =>
   newestFirst(
     await Sentence.find(filter, "-GID").populate(
       "author",
@@ -51,7 +59,7 @@ const sentencesWithAuthorNames = async (filter) =>
     )
   );
 
-export const createNewUserSentence = async (req, res) => {
+export const createNewUserSentence = async (req: Request, res: Response) => {
   try {
     // Only the sentence text comes from the browser. Who wrote it comes from
     // the verified token (req.userId), never from the request body, which
@@ -80,11 +88,11 @@ export const createNewUserSentence = async (req, res) => {
     res.status(201).json(newSentence);
   } catch (error) {
     res.locals.error = error;
-    res.status(409).json({ message: error.message });
+    res.status(409).json({ message: messageOf(error) });
   }
 };
 
-export const editUserSentence = async (req, res) => {
+export const editUserSentence = async (req: Request, res: Response) => {
   try {
     const { title, show } = req.body ?? {};
     // The title goes into the database query, so it must be plain text: an
@@ -117,11 +125,11 @@ export const editUserSentence = async (req, res) => {
     res.status(201).json(updateSentence);
   } catch (error) {
     res.locals.error = error;
-    res.status(409).json({ message: error.message });
+    res.status(409).json({ message: messageOf(error) });
   }
 };
 
-export const logoutUser = async (req, res) => {
+export const logoutUser = async (req: Request, res: Response) => {
   try {
     // If the request carries a valid login, bump the user's token version so
     // that token, and every copy of it, stops working.
@@ -136,12 +144,12 @@ export const logoutUser = async (req, res) => {
     res.status(200).json({ message: "Logged out" });
   } catch (error) {
     res.locals.error = error;
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: messageOf(error) });
   }
 };
 
 // Route for register/Retrieve/signout user
-export const getUserInfo = async (req, res) => {
+export const getUserInfo = async (req: Request, res: Response) => {
   // Register/Retrieve user
   try {
     const user = await Profile.findOne({ id: req.userId }).populate(
@@ -154,12 +162,15 @@ export const getUserInfo = async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     res.locals.error = error;
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: messageOf(error) });
   }
 };
 
 // Route for fetching all sentences awaiting approval
-export const getPendingApprovalSentences = async (req, res) => {
+export const getPendingApprovalSentences = async (
+  req: Request,
+  res: Response
+) => {
   try {
     // fetch all sentences that are not approved, newest (last edited) first
     const awaitingApproval = await sentencesWithAuthorNames({
@@ -169,12 +180,15 @@ export const getPendingApprovalSentences = async (req, res) => {
     res.status(200).json(awaitingApproval);
   } catch (error) {
     res.locals.error = error;
-    res.status(409).json({ message: error.message });
+    res.status(409).json({ message: messageOf(error) });
   }
 };
 
 // Route for approving or rejecting sentences
-export const updatePendingApprovalSentences = async (req, res) => {
+export const updatePendingApprovalSentences = async (
+  req: Request,
+  res: Response
+) => {
   try {
     // The admin middleware on this route has already checked isAdmin.
     const { status, sentence } = req.body ?? {};
@@ -210,12 +224,12 @@ export const updatePendingApprovalSentences = async (req, res) => {
     res.status(201).json(awaitingApproval);
   } catch (error) {
     res.locals.error = error;
-    res.status(409).json({ message: error.message });
+    res.status(409).json({ message: messageOf(error) });
   }
 };
 
 // fetch approved sentences from database
-export const fetchApprovedSentences = async (req, res) => {
+export const fetchApprovedSentences = async (req: Request, res: Response) => {
   try {
     // find all approved sentences, newest first
     const approvedSentences = await sentencesWithAuthorNames({
@@ -225,6 +239,6 @@ export const fetchApprovedSentences = async (req, res) => {
     res.status(200).json(approvedSentences);
   } catch (error) {
     res.locals.error = error;
-    res.status(409).json({ message: error.message });
+    res.status(409).json({ message: messageOf(error) });
   }
 };

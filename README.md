@@ -76,7 +76,7 @@ Client (http://localhost:3000, which forwards `/api` calls to the emulator):
 
 ## How Changes Go Live
 
-1. A pull request into `staging` runs the backend tests and the client's lint, tests and build, and gets a Netlify deploy preview that uses the staging backend.
+1. A pull request into `staging` runs both halves' type check, tests and build, plus the client's lint, and gets a Netlify deploy preview that uses the staging backend.
 2. Merging it deploys both halves to staging. Once the staging site and backend both run the merged commit, QA Wolf tests it.
 3. "Promote to production" (in the Actions tab) checks that QA Wolf greenlit that commit, then deploys the backend and the site from it.
 

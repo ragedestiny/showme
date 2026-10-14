@@ -1,0 +1,37 @@
+// TypeScript checks all of the backend's code, tests included, without
+// writing anything: `npm run typecheck`, which CI runs on every pull
+// request. `npm run build` uses tsconfig.build.json, which shares these
+// settings and writes the JavaScript Firebase runs.
+{
+  "compilerOptions": {
+    // What Node 24 understands ("engines" in package.json)
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    // Node's own rules for ES modules ("type": "module" in package.json).
+    // Imports name the .js file the build writes ("./app.js"), which
+    // TypeScript finds as app.ts.
+    "module": "NodeNext",
+    // Built-in types beyond the ones each import brings: Node's (process, crypto)
+    "types": ["node"],
+    // Libraries' own type files are checked by the libraries
+    "skipLibCheck": true,
+    "noEmit": true,
+
+    // Every check, including "this might be missing" (null/undefined) and
+    // "what type is this?" (no silent `any`)
+    "strict": true,
+    // A switch case must end with return/break, not run into the next one
+    "noFallthroughCasesInSwitch": true,
+    // A side-effect import must point at a real file
+    "noUncheckedSideEffectImports": true,
+
+    // Keep TypeScript "JavaScript plus types", so removing the types is all
+    // the build has to do: type-only imports say so (`import type`), and
+    // TypeScript-only features that generate code (enums, namespaces) aren't
+    // used
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "lib"]
+}

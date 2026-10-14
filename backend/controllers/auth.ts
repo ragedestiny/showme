@@ -1,22 +1,28 @@
+import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { OAuth2Client } from "google-auth-library";
+import { OAuth2Client, type LoginTicket } from "google-auth-library";
 import Profile from "../models/profile.js";
 import {
   SESSION_COOKIE,
   SESSION_SECONDS,
+  jwtSecret,
   sessionCookieOptions,
 } from "../config/session.js";
+import { messageOf } from "../utils/errors.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Log `user` in: sign our login token, put it in the session cookie and send
 // the profile back. Shared by the Google login and the staging test login, so
 // both produce exactly the same kind of session.
-export const startSession = (res, user) => {
+export const startSession = (
+  res: Response,
+  user: { id: string; tokenVersion: number }
+) => {
   // v = the user's current token version; logging out changes it.
   const customToken = jwt.sign(
     { id: user.id, v: user.tokenVersion },
-    process.env.JWT_SECRET,
+    jwtSecret(),
     { expiresIn: SESSION_SECONDS }
   );
 
@@ -32,7 +38,7 @@ export const startSession = (res, user) => {
   res.status(200).json({ user });
 };
 
-export const googleAuth = async (req, res) => {
+export const googleAuth = async (req: Request, res: Response) => {
   // Express 5 leaves req.body undefined when a request has no body.
   const { token } = req.body ?? {};
   if (!token) {
@@ -41,7 +47,7 @@ export const googleAuth = async (req, res) => {
 
   // Check the Google token on its own, so a bad token gets 401 ("show valid
   // ID") instead of 500 ("our server broke").
-  let ticket;
+  let ticket: LoginTicket;
   try {
     ticket = await client.verifyIdToken({
       idToken: token,
@@ -54,8 +60,15 @@ export const googleAuth = async (req, res) => {
     return res.status(401).json({ message: "Invalid Google token" });
   }
 
+  // A token Google verified always names the account (sub) and its email.
+  // Without them there's no one to log in.
+  const payload = ticket.getPayload();
+  if (!payload?.sub || !payload.email) {
+    return res.status(401).json({ message: "Invalid Google token" });
+  }
+  const { sub, given_name, family_name, email } = payload;
+
   try {
-    const { sub, given_name, family_name, email } = ticket.getPayload();
 
     let user = await Profile.findOne({ id: sub }).populate("ownSentences");
 
@@ -84,8 +97,9 @@ export const googleAuth = async (req, res) => {
   } catch (error) {
     // Saved for this request's log line (see middlewares/requestLog.ts)
     res.locals.error = error;
-    res
-      .status(500)
-      .json({ message: "Google authentication failed", error: error.message });
+    res.status(500).json({
+      message: "Google authentication failed",
+      error: messageOf(error),
+    });
   }
 };

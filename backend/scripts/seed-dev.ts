@@ -13,6 +13,7 @@ import mongoose from "mongoose";
 import Profile from "../models/profile.js";
 import { Sentence } from "../models/sentences.js";
 import tellList from "../public/tellList.js";
+import { messageOf } from "../utils/errors.js";
 
 const PRODUCTION_DB = "ShowME";
 const SEED_DOMAIN = "@seed.example";
@@ -23,6 +24,11 @@ if (!dbName || dbName === PRODUCTION_DB) {
     `Refusing to run: DATABASE_NAME is "${dbName ?? "(not set)"}". ` +
       "Set DATABASE_NAME=ShowME-dev in .env.local so this can never touch production."
   );
+  process.exit(1);
+}
+const databaseAccess = process.env.DATABASE_ACCESS;
+if (!databaseAccess) {
+  console.error("Can't run: DATABASE_ACCESS (from .env) is not set.");
   process.exit(1);
 }
 
@@ -38,7 +44,9 @@ const students = [
 //   approved -> shows in Collections
 //   pending  -> waits in the Admin review queue
 //   redo     -> sent back to the student
-const sentences = [
+type State = "approved" | "pending" | "redo";
+type SeedSentence = [studentId: string, day: number, show: string, state: State];
+const sentences: SeedSentence[] = [
   ["seed-mia", 1, "Frost crawled across the window as my breath hung in the air like a ghost.", "approved"],
   ["seed-mia", 2, "The sidewalk shimmered, and my ice cream surrendered before I could take a bite.", "approved"],
   ["seed-mia", 3, "Mountains of socks blocked the doorway, and a forgotten sandwich had grown fur.", "approved"],
@@ -61,7 +69,7 @@ const seed = async () => {
   await Sentence.deleteMany({ GID: { $in: old.map((p) => p.id) } });
   await Profile.deleteMany({ _id: { $in: old.map((p) => p._id) } });
 
-  const profiles = {};
+  const profiles: Record<string, InstanceType<typeof Profile>> = {};
   for (const s of students) {
     profiles[s.id] = await Profile.create({
       ...s,
@@ -88,14 +96,14 @@ const seed = async () => {
   }
   await Promise.all(Object.values(profiles).map((p) => p.save()));
 
-  const count = (state) => sentences.filter((s) => s[3] === state).length;
+  const count = (state: State) => sentences.filter((s) => s[3] === state).length;
   console.log(
     `Seeded ${students.length} students: ${count("approved")} approved, ` +
       `${count("pending")} waiting for review, ${count("redo")} sent back.`
   );
 };
 
-const makeAdmin = async (email) => {
+const makeAdmin = async (email: string) => {
   const result = await Profile.updateOne({ email }, { $set: { isAdmin: true } });
   if (result.matchedCount === 0) {
     console.error(`No profile with email ${email} in ${dbName}. Log in once locally first.`);
@@ -106,7 +114,7 @@ const makeAdmin = async (email) => {
 };
 
 try {
-  await mongoose.connect(process.env.DATABASE_ACCESS, { dbName });
+  await mongoose.connect(databaseAccess, { dbName });
   console.log(`Connected to database "${mongoose.connection.name}".`);
   await seed();
   const adminFlag = process.argv.indexOf("--admin");
@@ -114,7 +122,7 @@ try {
     await makeAdmin(process.argv[adminFlag + 1]);
   }
 } catch (error) {
-  console.error(error.message);
+  console.error(messageOf(error));
   process.exitCode = 1;
 } finally {
   await mongoose.disconnect();

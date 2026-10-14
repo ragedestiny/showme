@@ -6,7 +6,7 @@ import { Sentence } from "../models/sentences.js";
 import { createUser, logLineFor, sessionCookie } from "./helpers.js";
 
 beforeEach(() => {
-  logger.write.mockClear();
+  vi.mocked(logger.write).mockClear();
 });
 
 describe("request log (one structured line per request)", () => {
@@ -26,7 +26,9 @@ describe("request log (one structured line per request)", () => {
   });
 
   it("records which deploy wrote the line", async () => {
-    onTestFinished(() => vi.unstubAllEnvs());
+    onTestFinished(() => {
+      vi.unstubAllEnvs();
+    });
 
     // The deploy workflows write the git commit into APP_VERSION
     vi.stubEnv("APP_VERSION", "0123abcd");
@@ -34,7 +36,7 @@ describe("request log (one structured line per request)", () => {
     expect(await logLineFor("/version")).toMatchObject({ version: "0123abcd" });
 
     // Tests and the emulator have none
-    logger.write.mockClear();
+    vi.mocked(logger.write).mockClear();
     vi.stubEnv("APP_VERSION", "");
     await request(app).get("/version");
     expect(await logLineFor("/version")).toMatchObject({ version: "local" });

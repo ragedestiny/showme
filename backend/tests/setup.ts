@@ -3,7 +3,7 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import { logger } from "firebase-functions/logger";
 
-let mongod;
+let mongod: MongoMemoryServer;
 
 // Keep log lines out of the test output. Tests that check what gets logged
 // read them from logger.write's calls instead.
@@ -19,7 +19,9 @@ beforeAll(async () => {
 // Wipe every collection between tests so each test starts from an empty
 // database and no test depends on what another test left behind.
 afterEach(async () => {
-  const collections = await mongoose.connection.db.collections();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Not connected to the test database");
+  const collections = await db.collections();
   await Promise.all(collections.map((c) => c.deleteMany({})));
 });
 

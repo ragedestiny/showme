@@ -2,15 +2,22 @@ import { describe, expect, it } from "vitest";
 import request from "supertest";
 import app from "../app.js";
 import { Sentence } from "../models/sentences.js";
-import { createAdmin, createSentence, createUser, sessionCookie } from "./helpers.js";
+import {
+  authorsIn,
+  createAdmin,
+  createSentence,
+  createUser,
+  sessionCookie,
+  showsIn,
+} from "./helpers.js";
 
 describe("/Admin access control", () => {
-  it.each(["get", "patch"])("%s without a token returns 401", async (method) => {
+  it.each(["get", "patch"] as const)("%s without a token returns 401", async (method) => {
     const res = await request(app)[method]("/Admin");
     expect(res.status).toBe(401);
   });
 
-  it.each(["get", "patch"])("%s as a non-admin returns 403", async (method) => {
+  it.each(["get", "patch"] as const)("%s as a non-admin returns 403", async (method) => {
     const user = await createUser();
     const res = await request(app)[method]("/Admin").set("Cookie", sessionCookie(user));
     expect(res.status).toBe(403);
@@ -24,7 +31,7 @@ describe("requests with no body", () => {
     ["post", "/MyPage"],
     ["patch", "/MyPage"],
     ["patch", "/Admin"],
-  ])("%s %s without a body doesn't crash", async (method, path) => {
+  ] as const)("%s %s without a body doesn't crash", async (method, path) => {
     const admin = await createAdmin();
 
     const res = await request(app)[method](path).set("Cookie", sessionCookie(admin));
@@ -46,7 +53,7 @@ describe("GET /Admin", () => {
     const res = await request(app).get("/Admin").set("Cookie", sessionCookie(admin));
 
     expect(res.status).toBe(200);
-    expect(res.body.map((s) => s.show)).toEqual(["newer", "older"]);
+    expect(showsIn(res)).toEqual(["newer", "older"]);
     expect(res.body[0].author.firstName).toBe("Ada");
   });
 
@@ -61,7 +68,7 @@ describe("GET /Admin", () => {
 
     expect(res.status).toBe(200);
     // Exactly these fields: any other field on an author fails the test
-    expect(res.body.map((s) => s.author)).toStrictEqual([
+    expect(authorsIn(res)).toStrictEqual([
       { firstName: "Ada", lastName: "Lovelace" },
     ]);
     // Each sentence also stores its author's Google account id, as GID
@@ -76,7 +83,7 @@ describe("GET /Admin", () => {
 
     const res = await request(app).get("/Admin").set("Cookie", sessionCookie(admin));
 
-    expect(res.body.map((s) => s.show)).toEqual(["newer", "older"]);
+    expect(showsIn(res)).toEqual(["newer", "older"]);
   });
 });
 
@@ -93,7 +100,7 @@ describe("PATCH /Admin", () => {
       .set("Cookie", sessionCookie(admin))
       .send({ status: "approve", sentence: { _id: target._id } });
 
-    expect(res.body.map((s) => s.show)).toEqual(["newer", "older"]);
+    expect(showsIn(res)).toEqual(["newer", "older"]);
   });
 
   it("approves a sentence and returns the remaining queue", async () => {
@@ -108,11 +115,11 @@ describe("PATCH /Admin", () => {
       .send({ status: "approve", sentence: { _id: target._id } });
 
     expect(res.status).toBe(201);
-    expect(res.body.map((s) => s.show)).toEqual(["still waiting"]);
+    expect(showsIn(res)).toEqual(["still waiting"]);
     // The queue sent back shows only the author's name too (see GET /Admin)
     expect(res.body[0].author).toStrictEqual({ firstName: "Ada", lastName: "Lovelace" });
     expect(res.body[0]).not.toHaveProperty("GID");
-    const saved = await Sentence.findById(target._id);
+    const saved = await Sentence.findById(target._id).orFail();
     expect(saved.approved).toBe(true);
     expect(saved.toRedo).toBe(false);
   });
@@ -127,7 +134,7 @@ describe("PATCH /Admin", () => {
       .set("Cookie", sessionCookie(admin))
       .send({ status: "redo", sentence: { _id: target._id } });
 
-    const saved = await Sentence.findById(target._id);
+    const saved = await Sentence.findById(target._id).orFail();
     expect(saved.toRedo).toBe(true);
     expect(saved.approved).toBe(false);
   });

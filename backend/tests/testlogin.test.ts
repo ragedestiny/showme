@@ -28,7 +28,7 @@ describe("POST /auth/test (test-only login, for automated browser tests on stagi
       expect(res.status).toBe(200);
       expect(res.body.user).toMatchObject({ firstName: "Test", isAdmin: false });
       expect(res.body.token).toBeUndefined(); // never in the body
-      expect(res.headers["set-cookie"][0]).toMatch(/^session=.*HttpOnly/);
+      expect(res.get("Set-Cookie")?.[0]).toMatch(/^session=.*HttpOnly/);
 
       // The cookie works on a page that needs a login
       const mypage = await request(app)
@@ -61,7 +61,7 @@ describe("POST /auth/test (test-only login, for automated browser tests on stagi
       const first = await request(app)
         .post("/auth/test")
         .send({ secret: SECRET, role: "student" });
-      const student = await Profile.findOne({ id: "test-student" });
+      const student = await Profile.findOne({ id: "test-student" }).orFail();
       const sentence = await createSentence(student);
       student.ownSentences.push(sentence._id);
       await student.save();
@@ -94,7 +94,7 @@ describe("POST /auth/test (test-only login, for automated browser tests on stagi
 
     it("without fresh, keeps the test account's sentences", async () => {
       await request(app).post("/auth/test").send({ secret: SECRET, role: "student" });
-      const student = await Profile.findOne({ id: "test-student" });
+      const student = await Profile.findOne({ id: "test-student" }).orFail();
       await createSentence(student);
 
       await request(app).post("/auth/test").send({ secret: SECRET, role: "student" });
@@ -104,7 +104,7 @@ describe("POST /auth/test (test-only login, for automated browser tests on stagi
 
     it("refuses fresh: true with a wrong secret, deleting nothing", async () => {
       await request(app).post("/auth/test").send({ secret: SECRET, role: "student" });
-      const student = await Profile.findOne({ id: "test-student" });
+      const student = await Profile.findOne({ id: "test-student" }).orFail();
       await createSentence(student);
 
       const res = await request(app)
@@ -169,7 +169,7 @@ describe("POST /auth/test (test-only login, for automated browser tests on stagi
 
     it("with fresh: true, only wipes the sentences of the student role that asked", async () => {
       await request(app).post("/auth/test").send({ secret: SECRET, role: "student" });
-      const student = await Profile.findOne({ id: "test-student" });
+      const student = await Profile.findOne({ id: "test-student" }).orFail();
       await createSentence(student);
 
       const res = await request(app)

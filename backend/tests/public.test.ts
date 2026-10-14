@@ -3,7 +3,7 @@ import request from "supertest";
 import app from "../app.js";
 import tellList from "../public/tellList.js";
 import { Sentence } from "../models/sentences.js";
-import { createSentence, createUser } from "./helpers.js";
+import { authorsIn, createSentence, createUser, showsIn } from "./helpers.js";
 
 describe("GET / (tell sentences)", () => {
   it("returns every tell sentence, exactly as listed, without needing a login", async () => {
@@ -25,7 +25,7 @@ describe("GET /Collections (approved sentences)", () => {
     const res = await request(app).get("/Collections");
 
     expect(res.status).toBe(200);
-    expect(res.body.map((s) => s.show)).toEqual(["new", "old"]);
+    expect(showsIn(res)).toEqual(["new", "old"]);
     expect(res.body[0].author.firstName).toBe("Ada");
   });
 
@@ -47,7 +47,7 @@ describe("GET /Collections (approved sentences)", () => {
 
     expect(res.status).toBe(200);
     // Exactly these fields: any other field on an author fails the test
-    expect(res.body.map((s) => s.author)).toStrictEqual([
+    expect(authorsIn(res)).toStrictEqual([
       { firstName: "Alan", lastName: "Turing" },
       { firstName: "Ada", lastName: "Lovelace" },
     ]);
@@ -73,7 +73,7 @@ describe("GET /Collections (approved sentences)", () => {
 
     const res = await request(app).get("/Collections");
 
-    expect(res.body.map((s) => s.show)).toEqual(["newer", "older"]);
+    expect(showsIn(res)).toEqual(["newer", "older"]);
   });
 
   it("sorts old sentences whose date was stored as text among the others", async () => {
@@ -103,7 +103,7 @@ describe("GET /Collections (approved sentences)", () => {
 
     const res = await request(app).get("/Collections");
 
-    expect(res.body.map((s) => s.show)).toEqual([
+    expect(showsIn(res)).toEqual([
       "newest",
       "middle (date stored as text)",
       "oldest",
