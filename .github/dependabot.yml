@@ -40,6 +40,11 @@ updates:
       # would accept code that crashes. Move it together with Node itself.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # One TypeScript for both halves: the client's is held below 6.1 (see
+      # its rule below), and code shared by both sides must compile the same
+      # on each. Remove together with the client's rule.
+      - dependency-name: "typescript"
+        versions: [">=6.1.0"]
 
   # The client's npm libraries (client/package.json / package-lock.json),
   # with the same rules
@@ -67,8 +72,8 @@ updates:
         update-types: ["version-update:semver-major"]
       # The linter's TypeScript support (typescript-eslint) works only with
       # TypeScript below 6.1, and npm refuses to install a newer one next to
-      # it, which would fail the whole minor-and-patch PR. Remove this once
-      # typescript-eslint supports newer versions.
+      # it, which would fail the whole minor-and-patch PR. Remove this (and
+      # the backend's) once typescript-eslint supports newer versions.
       - dependency-name: "typescript"
         versions: [">=6.1.0"]
 
