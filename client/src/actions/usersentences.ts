@@ -1,5 +1,5 @@
 import * as api from "../api";
-import type { EditedSentence, NewSentence } from "../api/types";
+import type { EditSentenceBody, NewSentenceBody } from "../api/types";
 import type { AppThunk } from "../reducers/types";
 
 // Retrieve user sentences
@@ -15,7 +15,7 @@ export const getUserSentences = (): AppThunk => async (dispatch) => {
 
 // update edited sentences
 export const editSentences =
-  (editedSentence: EditedSentence): AppThunk =>
+  (editedSentence: EditSentenceBody): AppThunk =>
   async (dispatch) => {
     try {
       const { data } = await api.editUserSentences(editedSentence);
@@ -27,7 +27,7 @@ export const editSentences =
 
 // Create new sentences
 export const createSentence =
-  (newSentence: NewSentence): AppThunk =>
+  (newSentence: NewSentenceBody): AppThunk =>
   async (dispatch) => {
     try {
       const { data } = await api.createSentence(newSentence);
