@@ -8,7 +8,8 @@
 //   npm run check:contract:production    the real one (.env only)
 //
 // It only reads. It prints counts and the names of fields that don't fit,
-// never anything stored in them (no names, emails or sentences).
+// never anything stored in them (no names, emails or sentences). It also
+// counts profiles left with the old placeholder id "test" (see below).
 import mongoose from "mongoose";
 import type { z } from "zod";
 import {
@@ -75,6 +76,11 @@ try {
       .cursor(),
     SentenceWithAuthor
   );
+  // Not a question of fitting the contract, but worth knowing: before #64 a
+  // profile saved without an id got the placeholder "test". No Google account
+  // has that id, so nobody can sign in as one; it would only be leftover data.
+  const placeholders = await Profile.countDocuments({ id: "test" });
+  console.log(`Profiles with the old placeholder id "test": ${placeholders}`);
   if (profilesFit && sentencesFit && withAuthorsFit) {
     console.log("Everything fits the contract.");
   } else {

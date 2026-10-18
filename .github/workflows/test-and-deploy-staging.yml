@@ -190,9 +190,12 @@ jobs:
           credentials_json: ${{ secrets.STAGING_FIREBASE_SERVICE_ACCOUNT }}
 
       # "staging" is the project alias defined in backend/.firebaserc.
-      # --force lets the deploy set up the cleanup policy for old function
-      # images by itself (production's was set by hand), and lets it remove a
-      # staging function that no longer exists in the code without asking.
+      # --force lets the deploy remove a staging function that no longer
+      # exists in the code without asking. The cleanup policy that deletes
+      # old function images was set once by hand, as production's was
+      # (`firebase functions:artifacts:setpolicy`): --force tried to set it
+      # on every deploy but never managed to, warning "could not set up
+      # cleanup policy" each time.
       - name: Deploy Functions to Staging
         run: npx --yes firebase-tools@15 deploy --only functions --project staging --non-interactive --force
 
