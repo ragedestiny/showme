@@ -124,7 +124,7 @@ export const testLogin = async (req: Request, res: Response) => {
       { id: account.id },
       { $setOnInsert: account },
       { upsert: true, returnDocument: "after" }
-    ).populate("ownSentences");
+    );
 
     startSession(res, user);
   } catch (error) {

@@ -3,26 +3,32 @@ import {
   EditSentenceBody,
   NewSentenceBody,
   ReviewBody,
+  Sentence as SentenceAnswer,
+  Sentences,
+  SentencesWithAuthors,
+  TellSentences,
+  User,
 } from "../contract/api.js";
 import { Sentence } from "../models/sentences.js";
 import Profile from "../models/profile.js";
 import tellList from "../public/tellList.js";
 import { readSession } from "../middlewares/auth.js";
 import { SESSION_COOKIE, sessionCookieOptions } from "../config/session.js";
+import { answer } from "../utils/answer.js";
 import { firstProblem, messageOf } from "../utils/errors.js";
 
 // Route for getting the Tell Sentences. The list lives in the code
 // (public/tellList.ts), so it's sent straight from memory with no database
 // round trips.
 export const getTellSentences = (req: Request, res: Response) => {
-  res.status(200).json(tellList);
+  answer(res, 200, TellSentences, tellList);
 };
 
 export const getUserSentences = async (req: Request, res: Response) => {
   try {
     const userSentences = await Sentence.find({ GID: req.userId });
 
-    res.status(200).json(userSentences);
+    answer(res, 200, Sentences, userSentences);
   } catch (error) {
     // Saved for this request's log line (see middlewares/requestLog.ts)
     res.locals.error = error;
@@ -84,7 +90,7 @@ export const createNewUserSentence = async (req: Request, res: Response) => {
     await newSentence.save();
     user.ownSentences.push(newSentence._id);
     await user.save();
-    res.status(201).json(newSentence);
+    answer(res, 201, SentenceAnswer, newSentence);
   } catch (error) {
     res.locals.error = error;
     res.status(409).json({ message: messageOf(error) });
@@ -119,7 +125,7 @@ export const editUserSentence = async (req: Request, res: Response) => {
     await updateSentence.save();
     // send back updated sentence
 
-    res.status(201).json(updateSentence);
+    answer(res, 201, SentenceAnswer, updateSentence);
   } catch (error) {
     res.locals.error = error;
     res.status(409).json({ message: messageOf(error) });
@@ -149,14 +155,13 @@ export const logoutUser = async (req: Request, res: Response) => {
 export const getUserInfo = async (req: Request, res: Response) => {
   // Register/Retrieve user
   try {
-    const user = await Profile.findOne({ id: req.userId }).populate(
-      "ownSentences"
-    );
+    // Only the profile: the student's sentences come from GET /MyPage
+    const user = await Profile.findOne({ id: req.userId });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json(user);
+    answer(res, 200, User, user);
   } catch (error) {
     res.locals.error = error;
     res.status(500).json({ message: messageOf(error) });
@@ -174,7 +179,7 @@ export const getPendingApprovalSentences = async (
       approved: false,
       toRedo: false,
     });
-    res.status(200).json(awaitingApproval);
+    answer(res, 200, SentencesWithAuthors, awaitingApproval);
   } catch (error) {
     res.locals.error = error;
     res.status(409).json({ message: messageOf(error) });
@@ -220,7 +225,7 @@ export const updatePendingApprovalSentences = async (
       toRedo: false,
     });
 
-    res.status(201).json(awaitingApproval);
+    answer(res, 201, SentencesWithAuthors, awaitingApproval);
   } catch (error) {
     res.locals.error = error;
     res.status(409).json({ message: messageOf(error) });
@@ -235,7 +240,7 @@ export const fetchApprovedSentences = async (req: Request, res: Response) => {
       approved: true,
     });
 
-    res.status(200).json(approvedSentences);
+    answer(res, 200, SentencesWithAuthors, approvedSentences);
   } catch (error) {
     res.locals.error = error;
     res.status(409).json({ message: messageOf(error) });

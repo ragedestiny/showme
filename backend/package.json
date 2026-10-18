@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "emulators": "npm run build && npx --yes firebase-tools@15 emulators:start --only functions",
-    "seed:dev": "npm run build && node --env-file=.env --env-file-if-exists=.env.local lib/scripts/seed-dev.js"
+    "seed:dev": "npm run build && node --env-file=.env --env-file-if-exists=.env.local lib/scripts/seed-dev.js",
+    "check:contract": "npm run build && node --env-file=.env --env-file-if-exists=.env.local lib/scripts/check-contract.js",
+    "check:contract:production": "npm run build && node --env-file=.env lib/scripts/check-contract.js"
   },
   "keywords": [],
   "author": "",

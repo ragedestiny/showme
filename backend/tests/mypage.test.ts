@@ -4,7 +4,14 @@ import express from "express";
 import app from "../app.js";
 import Profile from "../models/profile.js";
 import { Sentence } from "../models/sentences.js";
-import { createSentence, createUser, sessionCookie, showsIn } from "./helpers.js";
+import {
+  createSentence,
+  createUser,
+  fieldsOf,
+  SENTENCE_FIELDS,
+  sessionCookie,
+  showsIn,
+} from "./helpers.js";
 
 const otherUser = () =>
   createUser({ id: "google-user-2", firstName: "Alan", email: "alan@example.com" });
@@ -31,6 +38,38 @@ describe("GET /MyPage", () => {
 
     expect(res.status).toBe(200);
     expect(showsIn(res)).toEqual(["Ada's sentence"]);
+  });
+
+  // Exactly the contract's fields: not the GID, hideedit, likeCount or
+  // database bookkeeping (__v) a stored sentence also has
+  it("sends each sentence as the contract lists it, and nothing else", async () => {
+    const ada = await createUser();
+    await createSentence(ada, { approved: true });
+
+    const res = await request(app).get("/MyPage").set("Cookie", sessionCookie(ada));
+
+    expect(res.body).toHaveLength(1);
+    expect(fieldsOf(res.body[0])).toEqual(SENTENCE_FIELDS);
+  });
+});
+
+describe("answers to POST and PATCH /MyPage", () => {
+  it("send the saved sentence as the contract lists it, and nothing else", async () => {
+    const ada = await createUser();
+    const created = await request(app)
+      .post("/MyPage")
+      .set("Cookie", sessionCookie(ada))
+      .send({ title: "day1", tell: "It is cold outside.", show: "Brr." });
+    const edited = await request(app)
+      .patch("/MyPage")
+      .set("Cookie", sessionCookie(ada))
+      .send({ title: "day1", show: "Frost bit my fingers." });
+
+    expect(created.status).toBe(201);
+    expect(fieldsOf(created.body)).toEqual(SENTENCE_FIELDS);
+    expect(edited.status).toBe(201);
+    expect(fieldsOf(edited.body)).toEqual(SENTENCE_FIELDS);
+    expect(edited.body.show).toBe("Frost bit my fingers.");
   });
 });
 
@@ -90,7 +129,9 @@ describe("POST /MyPage", () => {
       .send({ title: "Day 1", tell: "It is cold outside.", show: "Brr." });
 
     expect(res.status).toBe(201);
-    expect(res.body.GID).toBe(ada.id);
+    // GID isn't in the answer (see the contract); it's saved, though
+    const saved = await Sentence.findById(res.body._id).orFail();
+    expect(saved.GID).toBe(ada.id);
   });
 
   it.each([["   "], ["\n"], [" \n\t "], [""], [undefined], [42]])(

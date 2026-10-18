@@ -66,6 +66,8 @@ Backend (runs in the Firebase emulator):
 
 While it runs, `npm run build:watch` in a second terminal rebuilds on every save, and the emulator reloads the new code.
 
+The server sends every answer through the API contract (`backend/contract/api.ts`), and a stored document that doesn't fit it makes the request sending it fail. Before deploying a change to the contract's answers, `npm run check:contract` checks the practice database's data against it, and `npm run check:contract:production` the real one. Both only read, and print counts and field names, never what's stored.
+
 Client (http://localhost:3000, which forwards `/api` calls to the emulator):
 
 `cd client`
