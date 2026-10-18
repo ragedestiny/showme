@@ -73,7 +73,9 @@ describe("POST /auth/test (test-only login, for automated browser tests on stagi
       expect(first.status).toBe(200);
       expect(res.status).toBe(200);
       expect(await Sentence.countDocuments({ GID: "test-student" })).toBe(0);
-      expect(res.body.user.ownSentences).toEqual([]);
+      // The profile's list of them is emptied too (it isn't in the answer)
+      const fresh = await Profile.findOne({ id: "test-student" }).orFail();
+      expect(fresh.ownSentences).toEqual([]);
       // MyPage (which counts the sentences to pick the day) now sees none
       const mypage = await request(app)
         .get("/MyPage")
@@ -186,7 +188,8 @@ describe("POST /auth/test (test-only login, for automated browser tests on stagi
         const res = await request(app).post("/auth/test").send({ secret: SECRET, role });
 
         expect(res.status).toBe(200);
-        expect(res.body.user).toMatchObject({
+        // Exactly these fields, as for a Google login (see the contract)
+        expect(res.body.user).toStrictEqual({
           id,
           email: `${id}@showme.test`,
           firstName: "Test",

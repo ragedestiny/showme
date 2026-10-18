@@ -55,6 +55,20 @@ export const tokenFor = (
 // The Cookie header a browser sends back after logging in.
 export const sessionCookie = (user: TokenUser) => `session=${tokenFor(user)}`;
 
+// The fields an object has, sorted: to check an answer holds exactly what
+// the contract lists (contract/api.ts), and nothing else
+export const fieldsOf = (object: object) => Object.keys(object).sort();
+// A sentence's fields in every answer that sends sentences
+export const SENTENCE_FIELDS = [
+  "_id",
+  "approved",
+  "createdAt",
+  "show",
+  "tell",
+  "title",
+  "toRedo",
+];
+
 // The show sentence, and the author, of each sentence a response lists, in
 // order (the body is plain JSON, which TypeScript knows nothing about)
 export const showsIn = (res: Response): string[] =>

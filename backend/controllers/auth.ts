@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { OAuth2Client, type LoginTicket } from "google-auth-library";
-import { LoginBody } from "../contract/api.js";
+import { LoginAnswer, LoginBody } from "../contract/api.js";
 import Profile from "../models/profile.js";
 import {
   SESSION_COOKIE,
@@ -9,6 +9,7 @@ import {
   jwtSecret,
   sessionCookieOptions,
 } from "../config/session.js";
+import { answer } from "../utils/answer.js";
 import { messageOf } from "../utils/errors.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -35,8 +36,9 @@ export const startSession = (
   });
 
   // The token travels only in the httpOnly cookie, never in the body, where
-  // scripts in the page could read it.
-  res.status(200).json({ user });
+  // scripts in the page could read it. The profile is sent as the contract
+  // lists it, without its login details.
+  answer(res, 200, LoginAnswer, { user });
 };
 
 export const googleAuth = async (req: Request, res: Response) => {
@@ -72,7 +74,7 @@ export const googleAuth = async (req: Request, res: Response) => {
 
   try {
 
-    let user = await Profile.findOne({ id: sub }).populate("ownSentences");
+    let user = await Profile.findOne({ id: sub });
 
     if (!user) {
       // Google doesn't always send a first name, and a profile needs one.

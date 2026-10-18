@@ -75,7 +75,10 @@ export const TestLoginBody = z.object({
 });
 
 // ---- Answers ---------------------------------------------------------------
-// What the website reads from each answer.
+// What each answer holds, and all it holds: the server sends every answer
+// through these (utils/answer.ts), so a field a document has but the
+// contract doesn't list (a profile's login details, a sentence's GID) never
+// leaves the server.
 
 // GET /: a day's tell sentence (backend/public/tellList.ts)
 export const TellSentence = z.object({
@@ -90,8 +93,13 @@ export const User = z.object({
   id: z.string(), // the Google account's id
   firstName: z.string(),
   // Not required by the database: accounts made before last names were
-  // saved, or whose Google account has none, may not have one
-  lastName: z.string().optional(),
+  // saved, or whose Google account has none, may not have one. An old
+  // account might hold null instead; that's sent as no last name.
+  lastName: z
+    .string()
+    .nullable()
+    .transform((name) => name ?? undefined)
+    .optional(),
   email: z.string(),
   isAdmin: z.boolean(),
 });
@@ -115,6 +123,12 @@ export const Author = User.pick({ firstName: true, lastName: true });
 
 // GET /Collections (approved sentences) and GET/PATCH /Admin (the queue)
 export const SentenceWithAuthor = Sentence.extend({ author: Author });
+
+// The lists: GET / (tell sentences), GET /MyPage (a student's own
+// sentences), GET /Collections and GET/PATCH /Admin
+export const TellSentences = z.array(TellSentence);
+export const Sentences = z.array(Sentence);
+export const SentencesWithAuthors = z.array(SentenceWithAuthor);
 
 // Any refused or failed request: why
 export const ErrorAnswer = z.object({ message: z.string() });

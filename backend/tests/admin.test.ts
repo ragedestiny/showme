@@ -7,6 +7,8 @@ import {
   createAdmin,
   createSentence,
   createUser,
+  fieldsOf,
+  SENTENCE_FIELDS,
   sessionCookie,
   showsIn,
 } from "./helpers.js";
@@ -55,6 +57,25 @@ describe("GET /Admin", () => {
     expect(res.status).toBe(200);
     expect(showsIn(res)).toEqual(["newer", "older"]);
     expect(res.body[0].author.firstName).toBe("Ada");
+  });
+
+  // Exactly the contract's fields, in the queue and in the queue sent back
+  // after a decision
+  it("sends each sentence as the contract lists it, and nothing else", async () => {
+    const admin = await createAdmin();
+    const user = await createUser();
+    const target = await createSentence(user, { show: "approve me" });
+    await createSentence(user, { show: "still waiting" });
+
+    const listed = await request(app).get("/Admin").set("Cookie", sessionCookie(admin));
+    const after = await request(app)
+      .patch("/Admin")
+      .set("Cookie", sessionCookie(admin))
+      .send({ status: "approve", sentence: { _id: target._id } });
+
+    const fields = [...SENTENCE_FIELDS, "author"].sort();
+    expect(listed.body.map(fieldsOf)).toEqual([fields, fields]);
+    expect(after.body.map(fieldsOf)).toEqual([fields]);
   });
 
   // The review page shows only the author's name, so that's all it gets: not

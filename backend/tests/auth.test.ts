@@ -71,6 +71,22 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
     expect(res.body.user.id).toBe("google-new-user");
   });
 
+  // Exactly the contract's fields: no login details (tokenVersion), no
+  // database bookkeeping (_id, __v), no lists of sentences
+  it("sends back the profile as the contract lists it, and nothing else", async () => {
+    const res = await request(app).post("/auth").send({ token: "t" });
+
+    expect(res.body).toStrictEqual({
+      user: {
+        id: "google-new-user",
+        firstName: "Linus",
+        lastName: "Torvalds",
+        email: "linus@example.com",
+        isAdmin: false,
+      },
+    });
+  });
+
   // Google doesn't always send a first name (given_name is optional in its
   // tokens). Such a student must still be able to log in. The stand-in is
   // "Student", never part of their email, because the name shows on
@@ -240,7 +256,9 @@ describe("auth middleware (via GET /Login)", () => {
     expect(res.status).toBe(401);
   });
 
-  it("accepts a valid token and returns the user with their sentences", async () => {
+  // The profile only, as the contract lists it: the student's sentences come
+  // from GET /MyPage, and login details (tokenVersion) never leave the server
+  it("accepts a valid token and returns the user, as the contract lists it", async () => {
     const user = await createUser();
     const sentence = await createSentence(user);
     await Profile.updateOne(
@@ -251,8 +269,13 @@ describe("auth middleware (via GET /Login)", () => {
     const res = await request(app).get("/Login").set("Cookie", sessionCookie(user));
 
     expect(res.status).toBe(200);
-    expect(res.body.email).toBe("ada@example.com");
-    expect(res.body.ownSentences[0].show).toBe("Clothes carpeted the floor.");
+    expect(res.body).toStrictEqual({
+      id: "google-user-1",
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "ada@example.com",
+      isAdmin: false,
+    });
   });
 
   it("accepts a valid session cookie", async () => {
