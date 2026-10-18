@@ -149,6 +149,18 @@ describe("POST /auth (exchange a Google ID token for our JWT)", () => {
     expect(verifyIdToken).not.toHaveBeenCalled();
   });
 
+  // A token is text (see contract/api.ts); anything else isn't sent to Google
+  it.each([[{ token: 12345 }], [{ token: { forged: true } }], [{ token: "" }]])(
+    "rejects a token that isn't text (%j) with 401, without asking Google",
+    async (body) => {
+      const res = await request(app).post("/auth").send(body);
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Invalid Google token");
+      expect(verifyIdToken).not.toHaveBeenCalled();
+    }
+  );
+
   it("rejects a Google token that fails verification with 401", async () => {
     verifyIdToken.mockRejectedValue(new Error("Invalid token signature"));
 

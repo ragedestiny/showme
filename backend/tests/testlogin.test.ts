@@ -129,6 +129,35 @@ describe("POST /auth/test (test-only login, for automated browser tests on stagi
       expect(res.status).toBe(401);
     });
 
+    // A secret that isn't text is just a wrong one, checked before the role
+    it("refuses a secret that isn't text with 401, even with a bad role", async () => {
+      const res = await request(app)
+        .post("/auth/test")
+        .send({ secret: 12345, role: "superuser" });
+      expect(res.status).toBe(401);
+    });
+
+    it("refuses a right secret without a role", async () => {
+      const res = await request(app).post("/auth/test").send({ secret: SECRET });
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(/^role must be one of: student, /);
+    });
+
+    // Only fresh: true starts over; anything else (like the text "true")
+    // keeps the sentences, as it always has
+    it("treats fresh other than true as keeping the sentences", async () => {
+      await request(app).post("/auth/test").send({ secret: SECRET, role: "student" });
+      const student = await Profile.findOne({ id: "test-student" }).orFail();
+      await createSentence(student);
+
+      const res = await request(app)
+        .post("/auth/test")
+        .send({ secret: SECRET, role: "student", fresh: "true" });
+
+      expect(res.status).toBe(200);
+      expect(await Sentence.countDocuments({ GID: "test-student" })).toBe(1);
+    });
+
     it("refuses an unknown role", async () => {
       const res = await request(app)
         .post("/auth/test")

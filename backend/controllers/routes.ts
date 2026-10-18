@@ -1,11 +1,15 @@
 import type { Request, Response } from "express";
-import mongoose from "mongoose";
+import {
+  EditSentenceBody,
+  NewSentenceBody,
+  ReviewBody,
+} from "../contract/api.js";
 import { Sentence } from "../models/sentences.js";
 import Profile from "../models/profile.js";
 import tellList from "../public/tellList.js";
 import { readSession } from "../middlewares/auth.js";
 import { SESSION_COOKIE, sessionCookieOptions } from "../config/session.js";
-import { messageOf } from "../utils/errors.js";
+import { firstProblem, messageOf } from "../utils/errors.js";
 
 // Route for getting the Tell Sentences. The list lives in the code
 // (public/tellList.ts), so it's sent straight from memory with no database
@@ -25,13 +29,6 @@ export const getUserSentences = async (req: Request, res: Response) => {
     res.status(404).json({ message: messageOf(error) });
   }
 };
-
-// A show sentence must be text with something besides spaces and line breaks,
-// so a blank one can't use up a day or wipe out a written one. The website
-// checks this too, but anyone can send requests straight to the server.
-const isBlank = (show: unknown) =>
-  typeof show !== "string" || show.trim() === "";
-const BLANK_MESSAGE = "The show sentence can't be empty";
 
 // Newest first, to the millisecond. Not sorted by the database: some early
 // sentences hold their date as text, and the database puts every text date
@@ -63,11 +60,13 @@ export const createNewUserSentence = async (req: Request, res: Response) => {
   try {
     // Only the sentence text comes from the browser. Who wrote it comes from
     // the verified token (req.userId), never from the request body, which
-    // anyone can edit.
-    const { show, title, tell } = req.body ?? {};
-    if (isBlank(show)) {
-      return res.status(400).json({ message: BLANK_MESSAGE });
+    // anyone can edit. (Express 5 leaves req.body undefined when a request
+    // has no body.)
+    const body = NewSentenceBody.safeParse(req.body ?? {});
+    if (!body.success) {
+      return res.status(400).json({ message: firstProblem(body.error) });
     }
+    const { show, title, tell } = body.data;
 
     const user = await Profile.findOne({ id: req.userId });
     if (!user) {
@@ -94,16 +93,14 @@ export const createNewUserSentence = async (req: Request, res: Response) => {
 
 export const editUserSentence = async (req: Request, res: Response) => {
   try {
-    const { title, show } = req.body ?? {};
-    // The title goes into the database query, so it must be plain text: an
-    // object like {"$gt": ""} would be read by MongoDB as "any title" and pick
-    // out a sentence the request never named.
-    if (typeof title !== "string") {
-      return res.status(400).json({ message: "The title must be text" });
+    // The title must be plain text and the sentence not blank (see the
+    // contract): an object title would pick out a sentence the request
+    // never named.
+    const body = EditSentenceBody.safeParse(req.body ?? {});
+    if (!body.success) {
+      return res.status(400).json({ message: firstProblem(body.error) });
     }
-    if (isBlank(show)) {
-      return res.status(400).json({ message: BLANK_MESSAGE });
-    }
+    const { title, show } = body.data;
     // find sentence to replace
     const updateSentence = await Sentence.findOne({
       GID: req.userId,
@@ -191,15 +188,16 @@ export const updatePendingApprovalSentences = async (
 ) => {
   try {
     // The admin middleware on this route has already checked isAdmin.
-    const { status, sentence } = req.body ?? {};
-    // The id goes into the database query, so it must be a real id written as
-    // text: an object like {"$ne": null} would be read as "any sentence".
-    const id = sentence?._id;
-    if (typeof id !== "string" || !mongoose.isObjectIdOrHexString(id)) {
-      return res.status(400).json({ message: "Invalid sentence id" });
+    // The id must be a real id written as text, and the decision approve or
+    // redo (see the contract): an object id would pick out a sentence nobody
+    // chose.
+    const body = ReviewBody.safeParse(req.body ?? {});
+    if (!body.success) {
+      return res.status(400).json({ message: firstProblem(body.error) });
     }
+    const { status, sentence } = body.data;
 
-    const checkedSentence = await Sentence.findById(id);
+    const checkedSentence = await Sentence.findById(sentence._id);
 
     if (!checkedSentence) {
       return res.status(404).json({ message: "Sentence not found" });
@@ -209,7 +207,8 @@ export const updatePendingApprovalSentences = async (
     if (status === "approve") {
       checkedSentence.approved = true;
       checkedSentence.toRedo = false; // Ensure redo flag is cleared if approved
-    } else if (status === "redo") {
+    } else {
+      // "redo", the only other decision the contract allows
       checkedSentence.toRedo = true;
       checkedSentence.approved = false; // Ensure approved flag is cleared if redo
     }

@@ -109,6 +109,39 @@ describe("POST /MyPage", () => {
       expect(profile.ownSentences).toEqual([]);
     }
   );
+
+  // The title and tell sentence are stored as text (see contract/api.ts): a
+  // number or an object is refused rather than stored as something else.
+  it.each([
+    ["a number as the title", { title: 1 }, "The title must be text"],
+    ["an object as the title", { title: { $gt: "" } }, "The title must be text"],
+    ["no tell sentence", { tell: undefined }, "The tell sentence must be text"],
+  ])("refuses %s and saves nothing", async (_, change, message) => {
+    const ada = await createUser();
+
+    const res = await request(app)
+      .post("/MyPage")
+      .set("Cookie", sessionCookie(ada))
+      .send({ title: "day1", tell: "It is cold outside.", show: "Frost.", ...change });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe(message);
+    expect(await Sentence.countDocuments({ GID: ada.id })).toBe(0);
+  });
+
+  // The contract checks the sentence isn't blank; it doesn't change it
+  it("saves the show sentence exactly as written, spaces included", async () => {
+    const ada = await createUser();
+
+    const res = await request(app)
+      .post("/MyPage")
+      .set("Cookie", sessionCookie(ada))
+      .send({ title: "day1", tell: "It is cold outside.", show: "  Frost bit.\n" });
+
+    expect(res.status).toBe(201);
+    const saved = await Sentence.findById(res.body._id).orFail();
+    expect(saved.show).toBe("  Frost bit.\n");
+  });
 });
 
 describe("request size limit", () => {
