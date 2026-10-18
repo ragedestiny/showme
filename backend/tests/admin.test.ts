@@ -139,6 +139,28 @@ describe("PATCH /Admin", () => {
     expect(saved.approved).toBe(false);
   });
 
+  // Only "approve" and "redo" are decisions (see contract/api.ts). Anything
+  // else used to be saved as "no change"; now it's refused outright.
+  it.each([["publish"], [""], [undefined], [true]])(
+    "refuses a decision that isn't approve or redo (%j), changing nothing",
+    async (status) => {
+      const admin = await createAdmin();
+      const user = await createUser();
+      const target = await createSentence(user, { approved: true });
+
+      const res = await request(app)
+        .patch("/Admin")
+        .set("Cookie", sessionCookie(admin))
+        .send({ status, sentence: { _id: target._id } });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("The status must be approve or redo");
+      const saved = await Sentence.findById(target._id).orFail();
+      expect(saved.approved).toBe(true);
+      expect(saved.toRedo).toBe(false);
+    }
+  );
+
   // An id that's a database instruction, like {"$ne": null} ("any
   // sentence"), must not approve a sentence nobody picked.
   it.each([[{ $ne: null }], [{ $gt: "" }], ["not-an-id"], [12345]])(

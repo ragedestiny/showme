@@ -1,7 +1,9 @@
 import axios from "axios";
 import type {
-  EditedSentence,
-  NewSentence,
+  EditSentenceBody,
+  LoginBody,
+  NewSentenceBody,
+  ReviewBody,
   ReviewDecision,
   Sentence,
   SentenceWithAuthor,
@@ -19,16 +21,17 @@ export const API = axios.create({ baseURL: "/api" });
 export const fetchTellSentences = () => API.get<TellSentence[]>("/");
 
 // exchange the Google ID token for our login cookie
-export const loginUser = (token: string) => API.post("/auth", { token });
+export const loginUser = (token: string) =>
+  API.post("/auth", { token } satisfies LoginBody);
 
 // retrieve the signed-in user's info
 export const fetchUser = () => API.get<User>("/Login");
 
 // retrieve/create/update user sentences on mypage
 export const fetchUserSentences = () => API.get<Sentence[]>("/MyPage");
-export const createSentence = (newSentence: NewSentence) =>
+export const createSentence = (newSentence: NewSentenceBody) =>
   API.post<Sentence>("/MyPage", newSentence);
-export const editUserSentences = (editedSentence: EditedSentence) =>
+export const editUserSentences = (editedSentence: EditSentenceBody) =>
   API.patch<Sentence>("/MyPage", editedSentence);
 
 // logout User
@@ -42,7 +45,10 @@ export const updatePendingApprovalSentences = (
   sentence: SentenceWithAuthor
 ) =>
   // The server answers with the queue as it is after this decision
-  API.patch<SentenceWithAuthor[]>("/Admin", { status, sentence });
+  API.patch<SentenceWithAuthor[]>("/Admin", {
+    status,
+    sentence,
+  } satisfies ReviewBody);
 
 // On a fresh load of some pages, index.html starts a request before the app's
 // code has even downloaded (see vite.config.ts). Each one is handed over once:

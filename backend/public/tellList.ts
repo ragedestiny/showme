@@ -1,6 +1,7 @@
-// Tell Sentences
+// Tell Sentences: one per day, in order (GET / sends them all)
+import type { TellSentence } from "../contract/api.js";
 
-const tellList = [
+const tellList: TellSentence[] = [
   {
     key: 1,
     title: "Day 1",

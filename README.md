@@ -74,6 +74,8 @@ Client (http://localhost:3000, which forwards `/api` calls to the emulator):
 
 `npm start`
 
+The client's types come from the backend's API contract (`backend/contract/api.ts`), so `npm run typecheck` in `client` needs the backend's packages installed as well (`npm install` in `backend`, above).
+
 ## How Changes Go Live
 
 1. A pull request into `staging` runs both halves' type check, tests and build, plus the client's lint, and gets a Netlify deploy preview that uses the staging backend.

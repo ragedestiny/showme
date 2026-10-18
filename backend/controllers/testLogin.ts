@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { Request, Response } from "express";
+import { TestLoginBody } from "../contract/api.js";
 import Profile from "../models/profile.js";
 import { Sentence } from "../models/sentences.js";
 import { messageOf } from "../utils/errors.js";
@@ -88,19 +89,27 @@ export const testLogin = async (req: Request, res: Response) => {
     return res.status(404).json({ message: "Not found" });
   }
 
-  const { secret, role, fresh } = req.body ?? {};
+  // The secret first: if it's missing, isn't text or is wrong, that's all the
+  // sender learns (401), whatever else the request holds.
   // (doorIsOpen() has checked TEST_LOGIN_SECRET is set)
-  if (!secret || !sameSecret(secret, process.env.TEST_LOGIN_SECRET ?? "")) {
+  const secret = TestLoginBody.shape.secret.safeParse(req.body?.secret);
+  if (
+    !secret.success ||
+    !sameSecret(secret.data, process.env.TEST_LOGIN_SECRET ?? "")
+  ) {
     return res.status(401).json({ message: "Invalid test login secret" });
   }
 
-  // Object.hasOwn, so built-in names like "toString" don't count as roles
-  const account = Object.hasOwn(TEST_ACCOUNTS, role) ? TEST_ACCOUNTS[role] : undefined;
-  if (!account) {
+  // Then the rest, which must name one of the test accounts. Object.hasOwn,
+  // so built-in names like "toString" don't count as roles.
+  const body = TestLoginBody.safeParse(req.body);
+  if (!body.success || !Object.hasOwn(TEST_ACCOUNTS, body.data.role)) {
     return res
       .status(400)
       .json({ message: `role must be one of: ${Object.keys(TEST_ACCOUNTS).join(", ")}` });
   }
+  const { role, fresh } = body.data;
+  const account = TEST_ACCOUNTS[role];
 
   try {
     // Only ever the test account's own sentences (matched by its fixed id),

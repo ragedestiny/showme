@@ -96,10 +96,20 @@ jobs:
         with:
           node-version: '24' # keep in sync with NODE_VERSION in client/netlify.toml
           cache: npm
-          cache-dependency-path: client/package-lock.json
+          cache-dependency-path: |
+            client/package-lock.json
+            backend/package-lock.json
 
       # npm ci installs exactly what package-lock.json lists
       - name: Install Dependencies
+        run: npm ci
+
+      # The client's types come from the backend's API contract
+      # (backend/contract/api.ts), which is built on zod: the type check
+      # reads zod's types from backend/node_modules. (Netlify's build doesn't
+      # need this: only types are imported, and they vanish from the site.)
+      - name: Install the backend's packages (for the API contract's types)
+        working-directory: backend
         run: npm ci
 
       # TypeScript checks the code without running it (client/tsconfig.json)
