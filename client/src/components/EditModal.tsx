@@ -13,10 +13,10 @@ import type { AppDispatch } from "../reducers/types";
 // classes give it Font Awesome's size, natural width and bounce (styles.css
 // and Font Awesome's stylesheet), exactly as before.
 const Pencil = ({
-  hidden,
+  shown,
   onClick,
 }: {
-  hidden: boolean;
+  shown: boolean;
   onClick: () => void;
 }) => (
   <svg
@@ -26,10 +26,10 @@ const Pencil = ({
     role="img"
     viewBox="0 0 512 512"
     aria-hidden="true"
-    // React writes `hidden` on an <svg>, and Chrome (and the tests' pretend
-    // browser) hide it, but React's types only list it for HTML elements, as
-    // the HTML standard does. Untested in Firefox and Safari.
-    {...{ hidden }}
+    // Hidden with CSS, which works on an <svg> in every browser. (The
+    // `hidden` attribute is only defined for HTML elements, and browsers
+    // differ on it for an <svg>.)
+    style={shown ? undefined : { display: "none" }}
     onClick={onClick}
   >
     <path
@@ -87,7 +87,7 @@ function EditModal(props: {
   // React bootstrap edit modal for editing the sentences
   return (
     <>
-      <Pencil hidden={!props.showEdit} onClick={handleShow} />
+      <Pencil shown={props.showEdit} onClick={handleShow} />
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>{props.tell}</Modal.Title>

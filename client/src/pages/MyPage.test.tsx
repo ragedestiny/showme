@@ -188,6 +188,9 @@ describe("MyPage", () => {
     const item = (await screen.findByText("Show 2")).closest("form")!;
     const pencil = () => item.querySelector('[data-icon="pen-to-square"]')!;
     expect(pencil()).not.toBeVisible();
+    // Hidden with CSS, which works on an <svg> in every browser. The `hidden`
+    // attribute is only defined for HTML elements, so browsers differ on it.
+    expect(pencil()).not.toHaveAttribute("hidden");
 
     await user.hover(item);
     expect(pencil()).toBeVisible();
